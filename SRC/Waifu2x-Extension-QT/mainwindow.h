@@ -57,6 +57,8 @@
 #include <QMetaType>
 #include <QRandomGenerator>
 #include <QScrollBar>
+#include <QThread>
+#include <QThreadPool>
 
 typedef QList<QMap<QString, QString>> QList_QMap_QStrQStr;
 Q_DECLARE_METATYPE(QList_QMap_QStrQStr)
@@ -76,10 +78,10 @@ public:
     MainWindow(QWidget *parent = nullptr);
     void changeEvent(QEvent *e);
     //=======================
-    QString VERSION = "v2.58.13";//软件版本号
+    QString VERSION = "v3.21.13";//软件版本号
     bool isBetaVer = false;
-    QString LastStableVer = "v2.58.13";
-    QString LastBetaVer = "v2.58.03-beta";
+    QString LastStableVer = "v3.21.13";
+    QString LastBetaVer = "v3.21.13";
     //=======================
     QTranslator * translator;//界面翻译
     //=======
@@ -88,13 +90,11 @@ public:
     QString Current_Path = qApp->applicationDirPath();//当前路径
     //=======
     void Set_Font_fixed();
-    //=================================  File 文件=================================
+    //=================================  File 文件 =================================
     void dragEnterEvent(QDragEnterEvent *event);//拖放文件event
     void dropEvent(QDropEvent *event);
     void Read_urls(QList<QUrl> urls);
-
     void Read_Input_paths_BrowserFile(QStringList Input_path_List);
-
     bool AddNew_gif=false;//判断是否有新增文件-gif
     bool AddNew_image=false;//判断是否有新增文件-图片
     bool AddNew_video=false;//判断是否有新增文件-视频
@@ -131,6 +131,8 @@ public:
     bool file_OpenFolder(QString FolderPath);//调用系统资源管理器打开文件夹.
     bool file_OpenFilesFolder(QString FilePath);//打开文件所在的文件夹
     bool file_OpenFile(QString FilePath);
+    void file_MoveFiles_Folder_NcnnVulkanFolderProcess(QString Old_folder, QString New_folder, bool Delete_);
+    bool file_generateMarkFile(QString FileFullPath,QString Msg);
     //=================================  Table =================================
     void ui_tableViews_setUpdatesEnabled(bool isEnabled);// 启用/禁用 文件列表table的UI更新
 
@@ -159,19 +161,26 @@ public:
     int curRow_gif = -1;
     int curRow_video = -1;
 
-    int Table_Save_Current_Table_Filelist();//保存当前文件列表(包括table
+    int Table_Save_Current_Table_Filelist(QString Table_FileList_ini);//保存当前文件列表(包括table
 
-    int Table_Read_Saved_Table_Filelist();//读取保存的文件列表
+    int Table_Read_Saved_Table_Filelist(QString Table_FileList_ini);//读取保存的文件列表
 
-    int Table_Save_Current_Table_Filelist_Watchdog();//保存文件列表的看门狗线程,确保文件成功保存
+    int Table_Save_Current_Table_Filelist_Watchdog(QString Table_FileList_ini);//保存文件列表的看门狗线程,确保文件成功保存
 
     bool Table_insert_finished=false;
     QMutex mutex_Table_insert_finished;//监管是否完成表格插入的bool值的mutex
 
     QMutex mutex_Table_insert;//监管表格插入的mutex
     //================================= Waifu2x ====================================
+    void ShowFileProcessSummary();//展示文件处理总结报告
     QString OutPutFolder_main="";//总输出文件夹
     int Waifu2xMainThread();//waifu2x总线程,负责读取文件列表,调度waifu2x放大线程
+    QStringList WaitForEngineIO(QStringList OutPutFilesFullPathList);
+    QStringList WaitForEngineIO_NcnnVulkan(QString OutputFolderFullPath);
+    void Restore_SplitFramesFolderPath(QString SplitFramesFolderPath, QStringList GPU_SplitFramesFolderPath_List);
+    bool isForceRetryEnabled=true;
+    //bool KILL_TASK_(QString TaskName,bool RequestAdmin);
+    bool KILL_TASK_QStringList(QStringList TaskNameList,bool RequestAdmin);
     //==========================
     QString Waifu2x_ncnn_vulkan_FolderPath = "";
     QString Waifu2x_ncnn_vulkan_ProgramPath = "";
@@ -179,22 +188,21 @@ public:
     int Waifu2x_NCNN_Vulkan_Image(int rowNum,bool ReProcess_MissingAlphaChannel);//vulkan放大图片线程
     //vulakn放大GIF线程:1.主线程,拆分,调度放大子线程,组装&压缩;2.放大子线程,负责放大所有帧以及调整大小
     int Waifu2x_NCNN_Vulkan_GIF(int rowNum);
-    int Waifu2x_NCNN_Vulkan_GIF_scale(QMap<QString, QString> Sub_Thread_info,int *Sub_gif_ThreadNumRunning,bool *Frame_failed);
     //vulkan放大视频线程:1.主线程,拆分,调度放大子线程,组装;2.放大子线程,负责放大所有帧以及调整大小
     int Waifu2x_NCNN_Vulkan_Video(int rowNum);
     int Waifu2x_NCNN_Vulkan_Video_BySegment(int rowNum);
-    int Waifu2x_NCNN_Vulkan_Video_scale(QMap<QString, QString> Sub_Thread_info,int *Sub_video_ThreadNumRunning,bool *Frame_failed);
     QString Waifu2x_NCNN_Vulkan_ReadSettings();
+    QString Waifu2x_NCNN_Vulkan_ReadSettings_Video_GIF(int ThreadNum);
     //===
     int Realsr_NCNN_Vulkan_Image(int rowNum,bool ReProcess_MissingAlphaChannel);//Realsr放大图片线程
     //Realsr放大GIF线程:1.主线程,拆分,调度放大子线程,组装&压缩;2.放大子线程,负责放大所有帧以及调整大小
     int Realsr_NCNN_Vulkan_GIF(int rowNum);
-    int Realsr_NCNN_Vulkan_GIF_scale(QMap<QString, QString> Sub_Thread_info,int *Sub_gif_ThreadNumRunning,bool *Frame_failed);
     //Realsr放大视频线程:1.主线程,拆分,调度放大子线程,组装;2.放大子线程,负责放大所有帧以及调整大小
     int Realsr_NCNN_Vulkan_Video(int rowNum);
     int Realsr_NCNN_Vulkan_Video_BySegment(int rowNum);
-    int Realsr_NCNN_Vulkan_Video_scale(QMap<QString, QString> Sub_Thread_info,int *Sub_video_ThreadNumRunning,bool *Frame_failed);
     QString Realsr_NCNN_Vulkan_ReadSettings();
+    int Calculate_Temporary_ScaleRatio_RealsrNCNNVulkan(int ScaleRatio);
+    QString Realsr_NCNN_Vulkan_ReadSettings_Video_GIF(int ThreadNum);
     //=========================
     int Anime4k_Image(int rowNum,bool ReProcess_MissingAlphaChannel);
     int Anime4k_GIF(int rowNum);
@@ -205,6 +213,8 @@ public:
     int Anime4k_Video_scale(QMap<QString,QString> Sub_Thread_info,int *Sub_video_ThreadNumRunning,bool *Frame_failed);
     QString Anime4k_ReadSettings(bool PreserveAlphaChannel);
     void DenoiseLevelSpinboxSetting_Anime4k();
+    QString Anime4k_ProgramPath = Current_Path + "/Anime4K/Anime4K_waifu2xEX.exe";
+    int Get_NumOfGPU_Anime4k();
     //=================================
     int Waifu2x_Converter_Image(int rowNum,bool ReProcess_MissingAlphaChannel);//Converter放大图片线程
     //Converter放大GIF线程:1.主线程,拆分,调度放大子线程,组装&压缩;2.放大子线程,负责放大所有帧以及调整大小
@@ -219,12 +229,12 @@ public:
     int SRMD_NCNN_Vulkan_Image(int rowNum,bool ReProcess_MissingAlphaChannel);//SRMD放大图片线程
     //SRMD放大GIF线程:1.主线程,拆分,调度放大子线程,组装&压缩;2.放大子线程,负责放大所有帧以及调整大小
     int SRMD_NCNN_Vulkan_GIF(int rowNum);
-    int SRMD_NCNN_Vulkan_GIF_scale(QMap<QString, QString> Sub_Thread_info,int *Sub_gif_ThreadNumRunning,bool *Frame_failed);
     //SRMD放大视频线程:1.主线程,拆分,调度放大子线程,组装;2.放大子线程,负责放大所有帧以及调整大小
     int SRMD_NCNN_Vulkan_Video(int rowNum);
     int SRMD_NCNN_Vulkan_Video_BySegment(int rowNum);
-    int SRMD_NCNN_Vulkan_Video_scale(QMap<QString, QString> Sub_Thread_info,int *Sub_video_ThreadNumRunning,bool *Frame_failed);
     QString SrmdNcnnVulkan_ReadSettings();
+    QMap<QString,int> Calculate_ScaleRatio_SrmdNcnnVulkan(int ScaleRatio);
+    QString SrmdNcnnVulkan_ReadSettings_Video_GIF(int ThreadNum);
     //=================================
     int Waifu2x_Caffe_Image(int rowNum,bool ReProcess_MissingAlphaChannel);//Caffe放大图片线程
     //Caffe放大GIF线程:1.主线程,拆分,调度放大子线程,组装&压缩;2.放大子线程,负责放大所有帧以及调整大小
@@ -234,7 +244,7 @@ public:
     int Waifu2x_Caffe_Video(int rowNum);
     int Waifu2x_Caffe_Video_BySegment(int rowNum);
     int Waifu2x_Caffe_Video_scale(QMap<QString,QString> Sub_Thread_info,int *Sub_video_ThreadNumRunning,bool *Frame_failed);
-    QString Waifu2x_Caffe_ReadSettings(bool isImage);
+    QString Waifu2x_Caffe_ReadSettings();
     bool isWaifu2xCaffeEnabled();
     void DeleteErrorLog_Waifu2xCaffe();
 
@@ -265,12 +275,15 @@ public:
 
     void ListGPUs_Anime4k();//列出可用显卡 Anime4k
 
+    int FrameInterpolation_DetectGPU();//检测可用gpu(for vulkan)
+    QStringList Available_GPUID_FrameInterpolation;//可用GPU ID列表
     //======================== 图片处理 ================================
+    bool Image_Gif_AutoSkip_CustRes(int rowNum,bool isGif);
+    QMap<QString,int> Image_Gif_Read_Resolution(QString SourceFileFullPath);//获取图片&GIF分辨率
     bool Imgae_hasAlphaChannel(int rowNum);
     QString Imgae_PreProcess(QString ImagePath,bool ReProcess_AlphaChannel);
     QString SaveImageAs_FormatAndQuality(QString OriginalSourceImage_fullPath,QString ScaledImage_fullPath,int ScaleRatio,bool isDenoiseLevelEnabled,int DenoiseLevel);
     //================================================================
-
     int Waifu2x_Compatibility_Test();//引擎兼容性检测
     //初始化 -兼容性测试进度条
     void Init_progressBar_CompatibilityTest();
@@ -284,7 +297,6 @@ public:
     bool isCompatible_Waifu2x_Converter=false;
     bool isCompatible_Anime4k_CPU=false;
     bool isCompatible_Anime4k_GPU=false;
-    bool isCompatible_PythonExtension=false;
     bool isCompatible_FFmpeg=false;
     bool isCompatible_FFprobe=false;
     bool isCompatible_ImageMagick=false;
@@ -294,6 +306,9 @@ public:
     bool isCompatible_Waifu2x_Caffe_GPU=false;
     bool isCompatible_Waifu2x_Caffe_cuDNN=false;
     bool isCompatible_Realsr_NCNN_Vulkan=false;
+    bool isCompatible_RifeNcnnVulkan=false;
+    bool isCompatible_CainNcnnVulkan=false;
+    bool isCompatible_DainNcnnVulkan=false;
     //============================== 多显卡 ==========================================
     //waifu2x-ncnn-vulkan
     int GPU_ID_Waifu2x_NCNN_Vulkan_MultiGPU = 0;
@@ -332,30 +347,42 @@ public:
     int GPU_ID_Waifu2xCaffe_GetGPUInfo = 0;
     QString Waifu2xCaffe_GetGPUInfo();
     QMutex GetGPUInfo_QMutex_Waifu2xCaffe;
+    int Get_NumOfGPU_W2xCaffe();
     //================================ progressbar ===================================
     int Progressbar_MaxVal = 0;//进度条最大值
     int Progressbar_CurrentVal = 0;//进度条当前值
     void progressbar_clear();//清空进度条
     void progressbar_SetToMax(int maxval);//将进度条设定到最大值
-
     //=============================== textbrowser===============================
     void TextBrowser_StartMes();//输出启动信息
-
     //================================ gif ====================================
     int Gif_getDuration(QString gifPath);//获取帧间隔时长
     int Gif_getFrameDigits(QString gifPath);//获取帧数量的位数
     void Gif_splitGif(QString gifPath,QString SplitFramesFolderPath);//拆分gif
-    void Gif_assembleGif(QString ResGifPath,QString ScaledFramesPath,int Duration,bool CustRes_isEnabled,int CustRes_height,int CustRes_width);//组装gif
+    void Gif_assembleGif(QString ResGifPath,QString ScaledFramesPath,int Duration,bool CustRes_isEnabled,int CustRes_height,int CustRes_width,bool isOverScaled,QString SourceGifFullPath);//组装gif
     QString Gif_compressGif(QString gifPath,QString gifPath_compressd);//压缩gif
     //================================= video ===============================
+    QString isPreVFIDone_MarkFilePath(QString VideoPath);
+    int CalNumDigits(int input_num);
+    bool isSuccessiveFailuresDetected_VFI=false;
+    int FrameInterpolation_Video_BySegment(int rowNum);
+    int FrameInterpolation_Video(int rowNum);
+    int Old_FrameInterpolation_Engine_Index=0;
+    QString FrameInterpolation_ReadConfig(bool isUhdInput,int NumOfFrames);
+    bool FrameInterpolation(QString SourcePath,QString OutputPath);
+    bool Video_AutoSkip_CustRes(int rowNum);
     int video_UseRes2CalculateBitrate(QString VideoFileFullPath);//根据视频的分辨率计算他应该被分配的比特率
     QMap<QString,int> video_get_Resolution(QString VideoFileFullPath);//获取视频的帧率
     QString video_get_fps(QString videoPath);//获取视频fps
     int video_get_frameNumDigits(QString videoPath);//获取帧数量的位数
+    int video_get_frameNum(QString videoPath);//获取帧数量
+
+    //判断视频是否可变帧率
+    bool video_isVFR(QString videoPath);
     //拆分视频
     void video_video2images(QString VideoPath,QString FrameFolderPath,QString AudioPath);
     //组装视频
-    int video_images2video(QString VideoPath,QString video_mp4_scaled_fullpath,QString ScaledFrameFolderPath,QString AudioPath,bool CustRes_isEnabled,int CustRes_height,int CustRes_width);
+    int video_images2video(QString VideoPath,QString video_mp4_scaled_fullpath,QString ScaledFrameFolderPath,QString AudioPath,bool CustRes_isEnabled,int CustRes_height,int CustRes_width,bool isOverScaled);
     //读取输出视频的设定参数
     QString video_ReadSettings_OutputVid(QString AudioPath);
     //获取视频比特率
@@ -367,7 +394,7 @@ public:
     //获取时长(秒)
     int video_get_duration(QString videoPath);
     //转换为mp4
-    void video_2mp4(QString VideoPath);
+    QString video_To_CFRMp4(QString VideoPath);
     //提取音频
     void video_get_audio(QString VideoPath,QString AudioPath);
     //拆分视频(分段)
@@ -379,6 +406,7 @@ public:
     QMutex MultiLine_ErrorOutput_QMutex;
 
     bool video_isNeedProcessBySegment(int rowNum);//根据视频时长,判断是否需要分段处理
+    void DelVfiDir(QString VideoPath);
     //============================   custom res  ====================================
     //自定义分辨率列表
     QList<QMap<QString, QString>> Custom_resolution_list;//res_map["fullpath"],["height"],["width"]
@@ -396,6 +424,14 @@ public:
     QVariant Settings_Read_value(QString Key);
     bool isReadOldSettings = false;
     //================================ Other =======================================
+    void pushButton_Start_setEnabled_self(bool isEnabled);
+    void pushButton_Stop_setEnabled_self(bool isEnabled);
+
+    void TurnOffScreen();
+    QFuture<void> TurnOffScreen_QF;//监视是否连续多次点击关闭屏幕,避免连续启动nircmd
+
+    bool FileProgressWatch_isEnabled = true;//是否启用输出文件夹进度监控线程
+
     int ForceRetryCount = 1;
 
     void OutputSettingsArea_setEnabled(bool isEnabled);
@@ -419,14 +455,13 @@ public:
     QTimer *TimeCostTimer;//计算耗时的timer
     long unsigned int TimeCost = 0;//已消耗时间
     QString Seconds2hms(long unsigned int seconds);//秒 转 时:分:秒
-    int TaskNumTotal=0;//总任务数量(需要处理的文件)
-    int TaskNumFinished=0;//处理完的文件数量
+    long unsigned int TaskNumTotal=0;//总任务数量(需要处理的文件)
+    long unsigned int TaskNumFinished=0;//处理完的文件数量
     bool NewTaskFinished=false;//新任务被完成之标记
     long unsigned int ETA=0;//ETA时间(s)
 
     int CheckUpadte_Auto();//自动检查更新
 
-    int Donate_Count();//计算启动次数判断是否弹窗
     int Donate_DownloadOnlineQRCode();
 
     bool isSettingsHide=false;//是否隐藏主页的设置groupbox
@@ -442,7 +477,7 @@ public:
     void closeEvent(QCloseEvent* event);//关闭事件
     //void Close_self();//包含所有关闭时执行的代码
     bool QProcess_stop=false;//所有QProcess停止标记
-    int Auto_Save_Settings_Watchdog();//自动保存设置的看门狗
+    int Auto_Save_Settings_Watchdog(bool isWaitForSave);//自动保存设置的看门狗
     QFuture<int> AutoUpdate;//监视自动检查更新线程
     QFuture<int> DownloadOnlineQRCode;//监视在线下载二维码线程
     QFuture<int> Waifu2xMain;//监视waifu2x主线程
@@ -450,8 +485,8 @@ public:
     bool isAlreadyClosed=false;
     //================== 处理当前文件的进度 =========================
     long unsigned int TimeCost_CurrentFile =0;
-    int TaskNumTotal_CurrentFile=0;
-    int TaskNumFinished_CurrentFile=0;
+    long unsigned int TaskNumTotal_CurrentFile=0;
+    long unsigned int TaskNumFinished_CurrentFile=0;
     bool NewTaskFinished_CurrentFile=false;
     long unsigned int ETA_CurrentFile=0;
     bool isStart_CurrentFile=false;
@@ -465,6 +500,12 @@ public:
     QAction *restoreAct_SystemTrayIcon = new QAction(this);
     QAction *quitAct_SystemTrayIcon = new QAction(this);
     QAction *BackgroundModeAct_SystemTrayIcon = new QAction(this);
+    QAction *SendFeedback_SystemTrayIcon = new QAction(this);
+    QAction *About_SystemTrayIcon = new QAction(this);
+    QAction *Donate_SystemTrayIcon = new QAction(this);
+    QAction *Pause_SystemTrayIcon = new QAction(this);
+    QAction *Start_SystemTrayIcon = new QAction(this);
+
     //================= 输出路径 lineEdit 的右键菜单 ==============
     void Init_ActionsMenu_lineEdit_outputPath();
     QAction *OpenFolder_lineEdit_outputPath = new QAction(this);
@@ -483,7 +524,7 @@ public:
     QAction *RemoveALL_gif = new QAction(this);
     QAction *RemoveALL_video = new QAction(this);
     //=================== 生成bat文件来执行cmd命令 ===========
-    void ExecuteCMD_batFile(QString cmd_str);
+    void ExecuteCMD_batFile(QString cmd_str,bool requestAdmin);
     QMutex ExecuteCMD_batFile_QMutex;
     void Del_TempBatFile();
     //=====================================================
@@ -494,9 +535,46 @@ public:
     void checkBox_ReplaceOriginalFile_setEnabled_True_Self();
     bool ReplaceOriginalFile(QString original_fullpath,QString output_fullpath);
     void Init_ActionsMenu_checkBox_ReplaceOriginalFile();//替换源文件 的右键菜单
-    QAction *checkQAction_MoveToRecycleBin = new QAction(this);
+    QAction *QAction_checkBox_MoveToRecycleBin_checkBox_ReplaceOriginalFile = new QAction(this);
+    //===================== 删除原文件的右键菜单 ===========================
+    void Init_ActionsMenu_checkBox_DelOriginal();//替换源文件 的右键菜单
+    QAction *QAction_checkBox_MoveToRecycleBin_checkBox_DelOriginal = new QAction(this);
     //===================== 事件过滤器 =====================
     bool eventFilter(QObject *target, QEvent *event);
+    //===================== 块大小调整 ======================
+    int AddTileSize_NCNNVulkan_Converter(int OrginalTileSize);
+    int MinusTileSize_NCNNVulkan_Converter(int OrginalTileSize);
+    //==================== 预读取引擎设定 ==================
+    void PreLoad_Engines_Settings();
+    //===
+    QString Waifu2x_NCNN_Vulkan_PreLoad_Settings();
+    QString Waifu2x_NCNN_Vulkan_PreLoad_Settings_Str = "";
+    //===
+    QString SrmdNcnnVulkan_PreLoad_Settings();
+    QString SrmdNcnnVulkan_PreLoad_Settings_Str = "";
+    //===
+    QString Realsr_NCNN_Vulkan_PreLoad_Settings();
+    QString Realsr_NCNN_Vulkan_PreLoad_Settings_Str = "";
+    //===
+    QString Waifu2xCaffe_PreLoad_Settings();
+    QString Waifu2xCaffe_PreLoad_Settings_Str = "";
+    //===
+    QString Waifu2xConverter_PreLoad_Settings();
+    QString Waifu2xConverter_PreLoad_Settings_Str = "";
+    //===
+    QString Anime4k_PreLoad_Settings();
+    QString Anime4k_PreLoad_Settings_Str = "";
+    QString HDNDenoiseLevel_image = "";
+    QString HDNDenoiseLevel_gif = "";
+    QString HDNDenoiseLevel_video = "";
+    //================== 计算临时放大倍率 ====================
+    int Calculate_Temporary_ScaleRatio_W2xNCNNVulkan(int ScaleRatio);
+    //================== 多线程调整图片大小 =========================
+    void ImagesResize_Folder_MultiThread(int New_width,int New_height,QString ImagesFolderPath);
+    int TotalNumOfThreads_ImagesResize_Folder_MultiThread;
+    int RunningNumOfThreads_ImagesResize_Folder_MultiThread;
+    QMutex QMutex_ResizeImage_MultiThread;
+    void ResizeImage_MultiThread(int New_width,int New_height,QString ImagesPath);
     //=============
     ~MainWindow();
 
@@ -523,6 +601,8 @@ public slots:
 
     void SystemTray_hide_self();
     void SystemTray_showNormal_self();
+    void SystemTray_showDonate();
+
     void SystemTray_NewMessage(QString message);
     void EnableBackgroundMode_SystemTray();
     void on_activatedSysTrayIcon(QSystemTrayIcon::ActivationReason reason);
@@ -548,6 +628,8 @@ public slots:
 
     int Realsr_ncnn_vulkan_DetectGPU_finished();//检测可用gpu结束后的执行的槽函数
 
+    int FrameInterpolation_DetectGPU_finished();
+
     int CheckUpadte_NewUpdate(QString update_str,QString Change_log);//检测到更新的弹窗代码
 
     int Table_FileCount_reload();//重载table下的文件数量计数
@@ -563,7 +645,7 @@ public slots:
     void Table_video_CustRes_rowNumInt_HeightQString_WidthQString(int rowNum, QString height, QString width);
 
     //读取&保存文件列表与table后执行的代码
-    int Table_Read_Saved_Table_Filelist_Finished();
+    int Table_Read_Saved_Table_Filelist_Finished(QString Table_FileList_ini);
     int Table_Save_Current_Table_Filelist_Finished();
 
     void on_pushButton_ClearList_clicked();//清空列表
@@ -576,20 +658,25 @@ public slots:
 
     void SRMD_DetectGPU_finished();
 
-    void video_write_VideoConfiguration(QString VideoConfiguration_fullPath,int ScaleRatio,int DenoiseLevel,bool CustRes_isEnabled,int CustRes_height,int CustRes_width,QString EngineName,bool isProcessBySegment,QString VideoClipsFolderPath,QString VideoClipsFolderName);
+    void video_write_VideoConfiguration(QString VideoConfiguration_fullPath,int ScaleRatio,int DenoiseLevel,bool CustRes_isEnabled,int CustRes_height,int CustRes_width,QString EngineName,bool isProcessBySegment,QString VideoClipsFolderPath,QString VideoClipsFolderName,bool isVideoFrameInterpolationEnabled,int MultipleOfFPS);
 
     int Settings_Save();//保存设置
 
     //存储进度
-    void video_write_Progress_ProcessBySegment(QString VideoConfiguration_fullPath,int StartTime,bool isSplitComplete,bool isScaleComplete,int OLDSegmentDuration);
+    void video_write_Progress_ProcessBySegment(QString VideoConfiguration_fullPath,int StartTime,bool isSplitComplete,bool isScaleComplete,int OLDSegmentDuration,int LastVideoClipNo);
 
     //================== 处理当前文件的进度 =========================
     void CurrentFileProgress_Start(QString FileName,int FrameNum);
     void CurrentFileProgress_Stop();
     void CurrentFileProgress_progressbar_Add();
     void CurrentFileProgress_progressbar_Add_SegmentDuration(int SegmentDuration);
+    void CurrentFileProgress_progressbar_SetFinishedValue(int FinishedValue);
+    void CurrentFileProgress_WatchFolderFileNum(QString FolderPath);
+    void CurrentFileProgress_WatchFolderFileNum_Textbrower(QString SourceFile_fullPath,QString FolderPath,int TotalFileNum);
 
     void Donate_ReplaceQRCode(QString QRCodePath);
+
+    void Set_checkBox_DisableResize_gif_Checked();
 
 private slots:
     void on_pushButton_Start_clicked();
@@ -684,8 +771,6 @@ private slots:
 
     void on_checkBox_DelOriginal_stateChanged(int arg1);
 
-    void on_checkBox_videoSettings_isEnabled_stateChanged(int arg1);
-
     void on_checkBox_FileList_Interactive_stateChanged(int arg1);
 
     void on_checkBox_OutPath_isEnabled_stateChanged(int arg1);
@@ -725,8 +810,6 @@ private slots:
     void on_checkBox_SpecifyGPU_Anime4k_stateChanged(int arg1);
 
     void on_pushButton_ListGPUs_Anime4k_clicked();
-
-    void on_checkBox_isCompatible_PythonExtension_clicked();
 
     void on_checkBox_isCompatible_FFmpeg_clicked();
 
@@ -842,6 +925,60 @@ private slots:
 
     void on_comboBox_ImageSaveFormat_currentIndexChanged(int index);
 
+    void on_pushButton_ResizeFilesListSplitter_clicked();
+
+    void on_pushButton_TileSize_Add_W2xNCNNVulkan_clicked();
+
+    void on_pushButton_TileSize_Minus_W2xNCNNVulkan_clicked();
+
+    void on_pushButton_BlockSize_Add_W2xConverter_clicked();
+
+    void on_pushButton_BlockSize_Minus_W2xConverter_clicked();
+
+    void on_pushButton_Add_TileSize_SrmdNCNNVulkan_clicked();
+
+    void on_pushButton_Minus_TileSize_SrmdNCNNVulkan_clicked();
+
+    void on_pushButton_Add_TileSize_RealsrNCNNVulkan_clicked();
+
+    void on_pushButton_Minus_TileSize_RealsrNCNNVulkan_clicked();
+
+    void on_comboBox_GPGPUModel_A4k_currentIndexChanged(int index);
+
+    void on_checkBox_DisableGPU_converter_stateChanged(int arg1);
+
+    void on_groupBox_video_settings_clicked();
+
+    void on_pushButton_DetectGPU_VFI_clicked();
+
+    void on_lineEdit_MultiGPU_IDs_VFI_editingFinished();
+
+    void on_checkBox_MultiGPU_VFI_stateChanged(int arg1);
+
+    void on_groupBox_FrameInterpolation_clicked();
+
+    void on_checkBox_isCompatible_RifeNcnnVulkan_clicked();
+
+    void on_comboBox_Engine_VFI_currentIndexChanged(int index);
+
+    void on_checkBox_isCompatible_CainNcnnVulkan_clicked();
+
+    void on_pushButton_Verify_MultiGPU_VFI_clicked();
+
+    void on_checkBox_EnableVFI_Home_clicked();
+
+    void on_checkBox_MultiThread_VFI_stateChanged(int arg1);
+
+    void on_checkBox_MultiThread_VFI_clicked();
+
+    void on_pushButton_TurnOffScreen_clicked();
+
+    void on_checkBox_isCompatible_DainNcnnVulkan_clicked();
+
+    void on_pushButton_MultipleOfFPS_VFI_MIN_clicked();
+
+    void on_pushButton_MultipleOfFPS_VFI_ADD_clicked();
+
 signals:
     void Send_Table_EnableSorting(bool EnableSorting);
 
@@ -870,12 +1007,11 @@ signals:
     void Send_Waifu2x_DetectGPU_finished();
 
     void Send_Realsr_ncnn_vulkan_DetectGPU_finished();
+    void Send_FrameInterpolation_DetectGPU_finished();
 
     void Send_CheckUpadte_NewUpdate(QString, QString);
 
     void Send_Table_FileCount_reload();
-
-    void Send_MovToFinedList();
 
     void Send_Table_image_insert_fileName_fullPath(QString fileName, QString SourceFile_fullPath);
     void Send_Table_gif_insert_fileName_fullPath(QString fileName, QString SourceFile_fullPath);
@@ -885,7 +1021,7 @@ signals:
     void Send_Table_gif_CustRes_rowNumInt_HeightQString_WidthQString(int rowNum, QString height, QString width);
     void Send_Table_video_CustRes_rowNumInt_HeightQString_WidthQString(int rowNum, QString height, QString width);
 
-    void Send_Table_Read_Saved_Table_Filelist_Finished();
+    void Send_Table_Read_Saved_Table_Filelist_Finished(QString Table_FileList_ini);
     void Send_Table_Save_Current_Table_Filelist_Finished();
 
     void Send_SystemShutDown();
@@ -896,19 +1032,22 @@ signals:
 
     void Send_SRMD_DetectGPU_finished();
 
-    void Send_video_write_VideoConfiguration(QString VideoConfiguration_fullPath,int ScaleRatio,int DenoiseLevel,bool CustRes_isEnabled,int CustRes_height,int CustRes_width,QString EngineName,bool isProcessBySegment,QString VideoClipsFolderPath,QString VideoClipsFolderName);
+    void Send_video_write_VideoConfiguration(QString VideoConfiguration_fullPath,int ScaleRatio,int DenoiseLevel,bool CustRes_isEnabled,int CustRes_height,int CustRes_width,QString EngineName,bool isProcessBySegment,QString VideoClipsFolderPath,QString VideoClipsFolderName,bool isVideoFrameInterpolationEnabled,int MultipleOfFPS);
 
     void Send_Settings_Save();
 
-    void Send_video_write_Progress_ProcessBySegment(QString VideoConfiguration_fullPath,int StartTime,bool isSplitComplete,bool isScaleComplete,int OLDSegmentDuration);
+    void Send_video_write_Progress_ProcessBySegment(QString VideoConfiguration_fullPath,int StartTime,bool isSplitComplete,bool isScaleComplete,int OLDSegmentDuration,int LastVideoClipNo);
 
     //================== 处理当前文件的进度 =========================
     void Send_CurrentFileProgress_Start(QString FileName,int FrameNum);
     void Send_CurrentFileProgress_Stop();
     void Send_CurrentFileProgress_progressbar_Add();
     void Send_CurrentFileProgress_progressbar_Add_SegmentDuration(int SegmentDuration);
+    void Send_CurrentFileProgress_progressbar_SetFinishedValue(int FinishedValue);
 
     void Send_Donate_ReplaceQRCode(QString QRCodePath);
+
+    void Send_Set_checkBox_DisableResize_gif_Checked();
 
 private:
     Ui::MainWindow *ui;

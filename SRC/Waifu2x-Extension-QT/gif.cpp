@@ -19,18 +19,63 @@
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-
 /*
 获取gif帧间隔时间
 */
 int MainWindow::Gif_getDuration(QString gifPath)
 {
-    QString program = Current_Path+"/python_ext_waifu2xEX.exe";
-    QProcess GifDuration;
-    GifDuration.start("\""+program+"\" \""+gifPath+"\" duration");
-    while(!GifDuration.waitForStarted(100)&&!QProcess_stop) {}
-    while(!GifDuration.waitForFinished(100)&&!QProcess_stop) {}
-    int Duration=GifDuration.readAllStandardOutput().toInt();
+    //========================= 调用ffprobe读取GIF信息 ======================
+    QProcess *Get_GifAvgFPS_process = new QProcess();
+    QString cmd = "\""+Current_Path+"/ffprobe_waifu2xEX.exe\" -i \""+gifPath+"\" -select_streams v -show_streams -v quiet -print_format ini -show_format";
+    Get_GifAvgFPS_process->start(cmd);
+    while(!Get_GifAvgFPS_process->waitForStarted(100)&&!QProcess_stop) {}
+    while(!Get_GifAvgFPS_process->waitForFinished(100)&&!QProcess_stop) {}
+    //============= 保存ffprobe输出的ini格式文本 =============
+    QString ffprobe_output_str = Get_GifAvgFPS_process->readAllStandardOutput();
+    //================ 将ini写入文件保存 ================
+    QFileInfo videoFileInfo(gifPath);
+    QString Path_gif_info_ini = "";
+    QString video_dir = file_getFolderPath(gifPath);
+    int FileNo = 0;
+    do
+    {
+        FileNo++;
+        Path_gif_info_ini = video_dir+"/"+file_getBaseName(gifPath)+"_GifInfo_"+QString::number(FileNo,10)+"_W2xEX.ini";
+    }
+    while(QFile::exists(Path_gif_info_ini));
+    //=========
+    QFile gif_info_ini(Path_gif_info_ini);
+    gif_info_ini.remove();
+    if (gif_info_ini.open(QIODevice::ReadWrite | QIODevice::Text)) //QIODevice::ReadWrite支持读写
+    {
+        QTextStream stream(&gif_info_ini);
+        stream << ffprobe_output_str;
+    }
+    gif_info_ini.close();
+    //================== 读取ini获得参数 =====================
+    QSettings *configIniRead_videoInfo = new QSettings(Path_gif_info_ini, QSettings::IniFormat);
+    QString FPS_Division = configIniRead_videoInfo->value("/streams.stream.0/avg_frame_rate").toString().trimmed();
+    gif_info_ini.remove();
+    //=======================
+    int Duration = 0;
+    if(FPS_Division!="")
+    {
+        QStringList FPS_Nums = FPS_Division.split("/");
+        if(FPS_Nums.size()==2)
+        {
+            double FPS_Num_0 = FPS_Nums.at(0).toDouble();
+            double FPS_Num_1 = FPS_Nums.at(1).toDouble();
+            if(FPS_Num_0>0&&FPS_Num_1>0)
+            {
+                double Duration_double = 100/(FPS_Num_0/FPS_Num_1);
+                Duration = Duration_double;
+                if(Duration_double>Duration)
+                {
+                    Duration++;
+                }
+            }
+        }
+    }
     if(Duration<=0)
     {
         QMovie movie(gifPath);
@@ -80,39 +125,91 @@ void MainWindow::Gif_splitGif(QString gifPath,QString SplitFramesFolderPath)
 /*
 组装gif
 */
-void MainWindow::Gif_assembleGif(QString ResGifPath,QString ScaledFramesPath,int Duration,bool CustRes_isEnabled,int CustRes_height,int CustRes_width)
+void MainWindow::Gif_assembleGif(QString ResGifPath,QString ScaledFramesPath,int Duration,bool CustRes_isEnabled,int CustRes_height,int CustRes_width,bool isOverScaled,QString SourceGifFullPath)
 {
     emit Send_TextBrowser_NewMessage(tr("Start to assemble GIF:[")+ResGifPath+"]");
     //===============================
     QString resize_cmd ="";
-    if(CustRes_isEnabled)
-    {
-        if(CustRes_AspectRatioMode==Qt::IgnoreAspectRatio)
-        {
-            resize_cmd =" -resize "+QString::number(CustRes_width,10)+"x"+QString::number(CustRes_height,10)+"! ";
-        }
-        if(CustRes_AspectRatioMode==Qt::KeepAspectRatio)
-        {
-            resize_cmd =" -resize "+QString::number(CustRes_width,10)+"x"+QString::number(CustRes_height,10)+" ";
-        }
-        if(CustRes_AspectRatioMode==Qt::KeepAspectRatioByExpanding)
-        {
-            if(CustRes_width>CustRes_height)
-            {
-                resize_cmd =" -resize "+QString::number(CustRes_width,10)+" ";
-            }
-            else
-            {
-                resize_cmd =" -resize x"+QString::number(CustRes_height,10)+" ";
-            }
-        }
-    }
     QString program = Current_Path+"/convert_waifu2xEX.exe";
-    QString cmd = "\"" + program + "\" "+resize_cmd+" -delay " + QString::number(Duration, 10) + " -loop 0 " + "\"" + ScaledFramesPath + "/*png\" \""+ResGifPath+"\"";
-    QProcess *AssembleGIF=new QProcess();
-    AssembleGIF->start(cmd);
-    while(!AssembleGIF->waitForStarted(100)&&!QProcess_stop) {}
-    while(!AssembleGIF->waitForFinished(100)&&!QProcess_stop) {}
+    if(ui->checkBox_DisableResize_gif->isChecked()==false)
+    {
+        if(CustRes_isEnabled || isOverScaled)
+        {
+            if(isOverScaled==true && CustRes_isEnabled==false)
+            {
+                QMap<QString,int> res_map = Image_Gif_Read_Resolution(SourceGifFullPath);
+                int OriginalScaleRatio = ui->spinBox_ScaleRatio_gif->value();
+                resize_cmd =" -resize "+QString::number(res_map["width"]*OriginalScaleRatio,10)+"x"+QString::number(res_map["height"]*OriginalScaleRatio,10)+"! ";
+            }
+            if(CustRes_AspectRatioMode==Qt::IgnoreAspectRatio && CustRes_isEnabled==true)
+            {
+                resize_cmd =" -resize "+QString::number(CustRes_width,10)+"x"+QString::number(CustRes_height,10)+"! ";
+            }
+            if(CustRes_AspectRatioMode==Qt::KeepAspectRatio && CustRes_isEnabled==true)
+            {
+                resize_cmd =" -resize "+QString::number(CustRes_width,10)+"x"+QString::number(CustRes_height,10)+" ";
+            }
+            if(CustRes_AspectRatioMode==Qt::KeepAspectRatioByExpanding && CustRes_isEnabled==true)
+            {
+                if(CustRes_width>CustRes_height)
+                {
+                    resize_cmd =" -resize "+QString::number(CustRes_width,10)+" ";
+                }
+                else
+                {
+                    resize_cmd =" -resize x"+QString::number(CustRes_height,10)+" ";
+                }
+            }
+        }
+        QString cmd = "\"" + program + "\" \"" + ScaledFramesPath + "/*png\" "+resize_cmd+" -delay " + QString::number(Duration, 10) + " -loop 0 \""+ResGifPath+"\"";
+        QProcess *AssembleGIF=new QProcess();
+        AssembleGIF->start(cmd);
+        while(!AssembleGIF->waitForStarted(100)&&!QProcess_stop) {}
+        while(!AssembleGIF->waitForFinished(100)&&!QProcess_stop) {}
+        //======= 纠正文件名称错误(当 结果gif文件路径内有 % 符号时) ======
+        if(QFile::exists(ResGifPath)==false)
+        {
+            QFileInfo fileinfo(ResGifPath);
+            QString file_name = file_getBaseName(ResGifPath);
+            QString file_ext = fileinfo.suffix();
+            QString file_path = file_getFolderPath(fileinfo);
+            QString ActualResGifPath = file_path + "/" + file_name + "-0." + file_ext;
+            if(QFile::exists(ActualResGifPath)==true)
+            {
+                QFile::rename(ActualResGifPath,ResGifPath);
+            }
+        }
+        if(QFile::exists(ResGifPath))
+        {
+            emit Send_TextBrowser_NewMessage(tr("Finish assembling GIF:[")+ResGifPath+"]");
+            return;
+        }
+        AssembleGIF->kill();
+    }
+    //自行调整图片大小再组装
+    if(CustRes_isEnabled || isOverScaled)
+    {
+        int New_width=0;
+        int New_height=0;
+        if(isOverScaled==true && CustRes_isEnabled==false)
+        {
+            QMap<QString,int> res_map = Image_Gif_Read_Resolution(SourceGifFullPath);
+            int OriginalScaleRatio = ui->spinBox_ScaleRatio_gif->value();
+            New_width = res_map["width"]*OriginalScaleRatio;
+            New_height = res_map["height"]*OriginalScaleRatio;
+        }
+        if(CustRes_isEnabled==true)
+        {
+            New_width = CustRes_width;
+            New_height = CustRes_height;
+        }
+        ImagesResize_Folder_MultiThread(New_width,New_height,ScaledFramesPath);
+    }
+    QString cmd = "\"" + program + "\" \"" + ScaledFramesPath + "/*png\" -delay " + QString::number(Duration, 10) + " -loop 0 \""+ResGifPath+"\"";
+    QProcess *AssembleGIF_1=new QProcess();
+    AssembleGIF_1->start(cmd);
+    while(!AssembleGIF_1->waitForStarted(100)&&!QProcess_stop) {}
+    while(!AssembleGIF_1->waitForFinished(100)&&!QProcess_stop) {}
     //======= 纠正文件名称错误(当 结果gif文件路径内有 % 符号时) ======
     if(QFile::exists(ResGifPath)==false)
     {
@@ -126,8 +223,13 @@ void MainWindow::Gif_assembleGif(QString ResGifPath,QString ScaledFramesPath,int
             QFile::rename(ActualResGifPath,ResGifPath);
         }
     }
-    //===========
-    emit Send_TextBrowser_NewMessage(tr("Finish assembling GIF:[")+ResGifPath+"]");
+    //=====================
+    if(QFile::exists(ResGifPath))
+    {
+        emit Send_TextBrowser_NewMessage(tr("Finish assembling GIF:[")+ResGifPath+"]");
+        if(ui->checkBox_DisableResize_gif->isChecked()==false)emit Send_Set_checkBox_DisableResize_gif_Checked();
+    }
+    return;
 }
 /*
 压缩gif

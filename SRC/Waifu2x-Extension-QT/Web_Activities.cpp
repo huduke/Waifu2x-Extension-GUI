@@ -24,11 +24,16 @@
 */
 bool MainWindow::DownloadTo(QString OnlineLink,QString LocalPath)
 {
-    QString program = Current_Path+"/python_ext_waifu2xEX.exe";
+    QFile::remove(LocalPath);
+    QString user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36";
+    QString program = Current_Path+"/wget_waifu2xEX.exe";
     QProcess Downlad2;
-    Downlad2.start("\""+program+"\" \""+OnlineLink+"\" download2 \""+LocalPath+"\"");
+    Downlad2.start("\""+program+"\" --user-agent=\""+user_agent+"\" -O \""+LocalPath+"\" \""+OnlineLink+"\" --timeout=15");
     while(!Downlad2.waitForStarted(500)&&!QProcess_stop) {}
     while(!Downlad2.waitForFinished(500)&&!QProcess_stop) {}
+    QString Downlad2_OutPutStr = Downlad2.readAllStandardError().toLower();
+    QFileInfo *LocalPath_QFileInfo = new QFileInfo(LocalPath);
+    if(LocalPath_QFileInfo->size()<1 || Downlad2_OutPutStr.contains("saved")==false)QFile::remove(LocalPath);
     return QFile::exists(LocalPath);
 }
 /*
@@ -53,7 +58,7 @@ void MainWindow::ConnectivityTest_RawGithubusercontentCom()
     QString LocalAddress=Current_Path+"/ConnectivityTest_Waifu2xEX.txt";
     QFile::remove(LocalAddress);
     //===
-    emit Send_TextBrowser_NewMessage(tr("Start testing if your PC can connect to raw.githubusercontent.com."));
+    emit Send_TextBrowser_NewMessage(tr("Testing if your PC can connect to raw.githubusercontent.com..."));
     if(DownloadTo(OnlineAddress,LocalAddress)==true)
     {
         emit Send_TextBrowser_NewMessage(tr("Detection complete, your PC can connect to raw.githubusercontent.com."));
@@ -75,7 +80,7 @@ void MainWindow::Unable2Connect_RawGithubusercontentCom()
 {
     QMessageBox *MSG_2 = new QMessageBox();
     MSG_2->setWindowTitle(tr("Notification"));
-    MSG_2->setText(tr("It is detected that you are currently unable to connect to raw.githubusercontent.com, so enabling [Ban Gitee] will affect the software to automatically check for updates. It is recommended that you disable [Ban Gitee]."));
+    MSG_2->setText(tr("Detected that you are currently unable to connect to raw.githubusercontent.com, so enabling [Ban Gitee] won't allow the software to automatically check for updates. It is recommended that you disable [Ban Gitee]."));
     MSG_2->setIcon(QMessageBox::Information);
     MSG_2->setModal(false);
     MSG_2->show();

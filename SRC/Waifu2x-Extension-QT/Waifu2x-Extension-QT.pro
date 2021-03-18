@@ -41,6 +41,7 @@ SOURCES += \
     CustomResolution.cpp \
     Donate.cpp \
     Finish_Action.cpp \
+    Frame_Interpolation.cpp \
     Right-click_Menu.cpp \
     SystemTrayIcon.cpp \
     Web_Activities.cpp \
@@ -70,7 +71,6 @@ FORMS += \
 
 TRANSLATIONS += language_English.ts \
                language_Chinese.ts \
-               language_Japanese.ts \
                language_TraditionalChinese.ts
 
 TARGET = Waifu2x-Extension-GUI
@@ -86,5 +86,3 @@ RESOURCES += \
     icon.qrc
 
 RC_ICONS =icon/icon.ico
-
-

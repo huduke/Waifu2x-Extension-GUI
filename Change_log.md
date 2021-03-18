@@ -4,6 +4,179 @@
 
 #### [⭐Latest release](https://github.com/AaronFeng753/Waifu2x-Extension-GUI/releases/latest)
 ---
+## [v3.11.27](https://github.com/AaronFeng753/Waifu2x-Extension-GUI/releases/tag/v3.11.27)
+#### Change log:
+```
+v3.11.26-beta:
+- New model: rife-v2.4 for rife-ncnn-vulkan.
+- Update rife-ncnn-vulkan.
+
+v3.11.25-beta:
+- Add a turn off screen button.
+
+v3.11.24-beta:
+- Waiting for the main file processing thread to stop instead of force it to stop when user close the program.
+- Improve "Pause".
+
+v3.11.23-beta:
+- Optimize performance.
+
+v3.11.22-beta:
+- Multithreading of frame interpolation engines will not be enabled by default.
+- Update FFmpeg&FFprobe.
+- Fix bug: When [Process video by segment] is enabled, if the user forcibly closes the program and then restarts the software to continue processing the video, it may cause a cache error.
+
+v3.11.21-beta:
+- Update GUI layout.
+- Optimize performance.
+- Update ImageMagick,FFmpeg&FFprobe.
+- Fix bug: Engine settings are pre-loaded even though it's not being used.
+- Fix bug: Unable to overwrite files sometime.
+- Fix bug: Cannot fix the suffix of mp4 video when reading files.
+```
+---
+## [v3.11.19](https://github.com/AaronFeng753/Waifu2x-Extension-GUI/releases/tag/v3.11.19)
+#### Change log:
+```
+v3.11.19:
+- Optimize performance.
+- Update GUI.
+- Fix bug: Cannot interpolate frames of video with "%" in the absolute path.
+- Fix bug: [Hide Text Browser] doesn't work properly.
+
+v3.11.08-beta:
+- Fix bug: Failure detection for NCNN-Vulkan engines not working normally.
+- Fix bug: Extra commands are always loaded when [Process video by segment] is enabled.
+- Fix bug: Compatibility test may provide incorrect results.
+- Fix bug: Available GPU ID detection for NCNN-Vulkan engines may provide incorrect results.
+
+v3.11.07-beta:
+- Update GUI layout.
+
+v3.11.06-beta:
+- New Feature: Automatically enable [UHD Mode] when Ultra High Definition input is detected.
+- Much more compact gui.
+- Optimize performance.
+- Fix bug: Extra commands for video are not loaded when [Process video by segment] is enabled.
+- Fix bug: [Automatic file list scrolling] not working normally after user rearrange the files list.
+- Fix bug: [Verify] button is enabled when [Multi GPU] is disabled.
+
+v3.11.05-beta:
+- Fix bug: Unable to use [Process video by segment] when Frame Interpolation is disabled.
+
+v3.11.04-beta:
+- Add a shortcut for enable Frame Interpolation in home tab.
+- [Verify] button for Frame Interpolation.
+- Complete translation.
+- Other improvements.
+
+v3.11.03-beta:
+- New Feature: Now you can skip the super-resolution, only interpolate video frames by enable [Frame Interpolation only(Video)].
+- Add pause support for frame interpolation.
+- Add auto adjust for number of threads of frame interpolation.
+- Add failure detection for frame interpolation.
+- Remove temporary code for debug.
+- Fix bug: If frame interpolation failed in the middle of processing video by segment, clip with wrong frame rate gonna be generated.
+- Fix bug: Cannot read video configuration correctly.
+
+v3.11.02-beta:
+- New Feature: Video frame interpolation using cain-ncnn-vulkan(@nihui).
+- Add tool tips.
+- Fix bug: Video frame interpolation engines won't work when there are special characters in the installation path.
+- Fix bug: Video frame interpolation setting is not saved in the video configuration file.
+
+v3.11.01-beta:
+- New Feature: Video frame interpolation using rife-ncnn-vulkan(@nihui).
+- Update Waifu2x-NCNN-Vulkan,SRMD-NCNN-Vulkan,RealSR-NCNN-Vulkan.
+- Fix bug: Failure detection for NCNN-Vulkan engines doesn't work as intended when processing GIF and Video.
+```
+---
+## [v2.71.22](https://github.com/AaronFeng753/Waifu2x-Extension-GUI/releases/tag/v2.71.22)
+#### Change log:
+- The maximum number of threads will no longer be limited by the number of CPU logical cores.
+- Speed up the assembly of GIF.
+- Kill the sub process that is stuck in the background after stopping processing the file.
+- Fix bug: Gif scale ratio is wrong when using Anime4k.
+- Fix bug: Modifying the duration of the video clip after pausing and then continuing processing will cause the video sequence to be disordered.
+- Fix bug: Hotkey for Remove from list is still enabled when processing files.
+- Fix bug: [Time remaining] and [ETA] are still bing calculated even though they are not being displayed.
+---
+## [v2.71.12](https://github.com/AaronFeng753/Waifu2x-Extension-GUI/releases/tag/v2.71.12)
+#### Change log:
+- Significantly improve the efficiency, speed and stability of ALL engines when processing Video and GIF.
+- The OLD version of waifu2x-ncnn-vulkan engine will no longer support the use of multiple graphics cards to process GIF and video.
+- Fix bug: When custom resolution and video settings are enabled and the video stream bit rate is left 0, the video stream bit rate cannot be calculated normally.
+- Fix bug: Scale ratio might be incorrect when using srmd-ncnn-vulkan.
+- Fix bug: Unable to assemble gif because ImageMagick is not compatible with new AMD GPU driver.
+- Update ImageMagick,FFmpeg&FFprobe.
+---
+## [v2.62.13](https://github.com/AaronFeng753/Waifu2x-Extension-GUI/releases/tag/v2.62.13)
+#### Change log:
+- Improve the performance of SRMD-NCNN-Vulkan.
+- Fix bug: Incorrect scale ratio when using SRMD-NCNN-Vulkan.
+---
+## [v2.62.12](https://github.com/AaronFeng753/Waifu2x-Extension-GUI/releases/tag/v2.62.12)
+#### Change log:
+- Speed up the processing of video and gif.
+- Abandon python extension to improve performance.
+- Improve download speed, video processing flow, multithreading performance and other performance improvements.
+- More detailed tool tips, fix typo.
+- Fix bug: Cannot process variable frame rate video properly.
+- Fix bug: After the compatibility test is over, the waifu2x-caffe process will stay in the background.
+---
+## [v2.61.13](https://github.com/AaronFeng753/Waifu2x-Extension-GUI/releases/tag/v2.61.13)
+#### Change log:
+- NEW Feature: Automatically skip file when its resolution is larger than the specified resolution.
+- NEW Feature: CUDA support for Anime4k
+- Preload engines settings to improve performance,and other performance improvements.
+- Update and adapt to the new version of Anime4K.
+- Improve the way of reading picture resolution.
+- Improve the GUI based on [@Nova-Aurora](https://github.com/Nova-Aurora)'s suggestion.
+- Update FFmpeg&FFprobe,ImageMagick.
+- English localization fixes(Thanks to [@Nova-Aurora](https://github.com/Nova-Aurora)), and GUI fixes.
+- Fix bug: After the user specifies the processor, the [Disable GPU] option of Waifu2x-Converter will not take effect.
+- Fix bug: If pause during the image processing, useless files will be generated.
+---
+## [v2.59.15](https://github.com/AaronFeng753/Waifu2x-Extension-GUI/releases/tag/v2.59.15)
+```
+v2.59.15:
+- Improve GUI.
+
+v2.59.04-beta:
+- Images will only be forced to be saved as PNG when the specified file format does not support Alpha channel.
+- Add buttons to adjust the block size to the nth power of 2.
+- Performance optimization.
+- Edit tool tip.
+- Other improvements.
+- Update ImageMagick,FFmpeg&FFprobe.
+
+v2.59.03-beta:
+- Automatically disable [Save Files List] button when files list is empty.
+- More compact GUI, and other improvements.
+- Edit tool tip and Chinese translation.
+
+v2.59.02-beta:
+- NEW Feature: Reset Files List scale.
+- NEW Feature: File count for each kind of file.
+- New icons.
+- Performance optimization.
+- Other improvements to the GUI.
+- Complete translation.
+- Fix bug: [Add Files] button is not disabled when loading Files list.
+- Fix bug: Horizontal header data of the Files List will lost after using the right-click menu of [Remove item].
+
+v2.59.01-beta:
+- NEW Feature: Now you can hide components easier by drag the handle.
+- Improve GUI design.
+
+v2.58.14-beta:
+- NEW Feature: Now you can adjust the horizontal width of the file list.
+- Move [Move to Recycle Bin] option to Right-click menu of [Delete original files]
+- Other improvements to the GUI.
+- Notify users GPU ID list is empty when they try to enable Multi-GPU.
+- Optimize performance.
+```
+---
 ## [v2.58.13](https://github.com/AaronFeng753/Waifu2x-Extension-GUI/releases/tag/v2.58.13)
 #### Change log:
 - NEW Feature: CPU support for waifu2x-ncnn-vulkan.

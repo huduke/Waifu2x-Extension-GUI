@@ -19,6 +19,98 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 /*
+计算数字的位数
+*/
+int MainWindow::CalNumDigits(int input_num)
+{
+    int frameNumDigits=1+(int)log10(input_num);
+    return frameNumDigits;
+}
+
+/*
+判断视频是否是可变帧率的
+*/
+bool MainWindow::video_isVFR(QString videoPath)
+{
+    //========================= 调用ffprobe读取视频信息 ======================
+    QProcess *Get_VideoFPS_process = new QProcess();
+    QString cmd = "\""+Current_Path+"/ffprobe_waifu2xEX.exe\" -i \""+videoPath+"\" -select_streams v -show_streams -v quiet -print_format ini -show_format";
+    Get_VideoFPS_process->start(cmd);
+    while(!Get_VideoFPS_process->waitForStarted(100)&&!QProcess_stop) {}
+    while(!Get_VideoFPS_process->waitForFinished(100)&&!QProcess_stop) {}
+    //============= 保存ffprobe输出的ini格式文本 =============
+    QString ffprobe_output_str = Get_VideoFPS_process->readAllStandardOutput();
+    //================ 将ini写入文件保存 ================
+    QFileInfo videoFileInfo(videoPath);
+    QString Path_video_info_ini = "";
+    QString video_dir = file_getFolderPath(videoPath);
+    int FileNo = 0;
+    do
+    {
+        FileNo++;
+        Path_video_info_ini = video_dir+"/"+file_getBaseName(videoPath)+"_videoInfo_"+QString::number(FileNo,10)+"_Waifu2xEX.ini";
+    }
+    while(QFile::exists(Path_video_info_ini));
+    //=========
+    QFile video_info_ini(Path_video_info_ini);
+    video_info_ini.remove();
+    if (video_info_ini.open(QIODevice::ReadWrite | QIODevice::Text)) //QIODevice::ReadWrite支持读写
+    {
+        QTextStream stream(&video_info_ini);
+        stream << ffprobe_output_str;
+    }
+    video_info_ini.close();
+    //================== 读取ini获得参数 =====================
+    QSettings *configIniRead_videoInfo = new QSettings(Path_video_info_ini, QSettings::IniFormat);
+    QString avg_frame_rate = configIniRead_videoInfo->value("/streams.stream.0/avg_frame_rate").toString().trimmed();
+    QString r_frame_rate = configIniRead_videoInfo->value("/streams.stream.0/r_frame_rate").toString().trimmed();
+    video_info_ini.remove();
+    if(avg_frame_rate!=""&&r_frame_rate!="")
+    {
+        return (avg_frame_rate!=r_frame_rate);
+    }
+    else
+    {
+        return false;
+    }
+}
+/*
+根据分辨率判断是否跳过
+true = 跳过
+*/
+bool MainWindow::Video_AutoSkip_CustRes(int rowNum)
+{
+    if(ui->checkBox_AutoSkip_CustomRes->isChecked()==false)return false;
+    QString SourceFile_fullPath = Table_model_video->item(rowNum,2)->text();
+    if(CustRes_isContained(SourceFile_fullPath))
+    {
+        QMap<QString, QString> Res_map = CustRes_getResMap(SourceFile_fullPath);//res_map["fullpath"],["height"],["width"]
+        int CustRes_height=Res_map["height"].toInt();
+        int CustRes_width=Res_map["width"].toInt();
+        //=========================
+        QMap<QString,int> res_map = video_get_Resolution(SourceFile_fullPath);
+        int original_height = res_map["height"];
+        int original_width = res_map["width"];
+        if(original_height<=0||original_width<=0)//判断是否读取失败
+        {
+            return false;
+        }
+        //==========================
+        if((CustRes_height*CustRes_width) <= (original_height*original_width))
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    else
+    {
+        return false;
+    }
+}
+/*
 直接读取视频 分辨率 然后用 自有算法 计算其应该有的比特率
 单位为k
 */
@@ -46,33 +138,58 @@ int MainWindow::video_UseRes2CalculateBitrate(QString VideoFileFullPath)
 */
 QMap<QString,int> MainWindow::video_get_Resolution(QString VideoFileFullPath)
 {
-    QString FrameImageFullPath="";
-    FrameImageFullPath = file_getBaseName(VideoFileFullPath)+"_GetVideoRes_W2xEX.jpg";
-    QFile::remove(FrameImageFullPath);
-    QString program = Current_Path+"/ffmpeg_waifu2xEX.exe";
-    QProcess vid;
-    vid.start("\""+program+"\" -ss 0 -i \""+VideoFileFullPath+"\" -vframes 1 \""+FrameImageFullPath+"\"");
-    while(!vid.waitForStarted(100)&&!QProcess_stop) {}
-    while(!vid.waitForFinished(100)&&!QProcess_stop) {}
-    QImage qimage_original;
-    qimage_original.load(FrameImageFullPath);
-    int original_height = qimage_original.height();
-    int original_width = qimage_original.width();
-    QFile::remove(FrameImageFullPath);
-    if(original_height<=0||original_width<=0)
+    emit Send_TextBrowser_NewMessage(tr("Get resolution of the video:[")+VideoFileFullPath+"]");
+    //========================= 调用ffprobe读取视频信息 ======================
+    QProcess *Get_resolution_process = new QProcess();
+    QString cmd = "\""+Current_Path+"/ffprobe_waifu2xEX.exe\" -i \""+VideoFileFullPath+"\" -select_streams v -show_streams -v quiet -print_format ini -show_format";
+    Get_resolution_process->start(cmd);
+    while(!Get_resolution_process->waitForStarted(100)&&!QProcess_stop) {}
+    while(!Get_resolution_process->waitForFinished(100)&&!QProcess_stop) {}
+    //============= 保存ffprobe输出的ini格式文本 =============
+    QString ffprobe_output_str = Get_resolution_process->readAllStandardOutput();
+    //================ 将ini写入文件保存 ================
+    QFileInfo videoFileInfo(VideoFileFullPath);
+    QString Path_video_info_ini = "";
+    QString video_dir = file_getFolderPath(VideoFileFullPath);
+    int FileNo = 0;
+    do
     {
-        emit Send_TextBrowser_NewMessage(tr("ERROR! Unable to read the resolution of the video. [")+VideoFileFullPath+"]");
-        QMap<QString,int> empty;
-        empty["height"] = 0;
-        empty["width"] = 0;
-        return empty;
+        FileNo++;
+        Path_video_info_ini = video_dir+"/"+file_getBaseName(VideoFileFullPath)+"_videoInfo_"+QString::number(FileNo,10)+"_Waifu2xEX.ini";
     }
-    //==============================
-    QMap<QString,int> res_map;
-    //读取文件信息
-    res_map["height"] = original_height;
-    res_map["width"] = original_width;
-    return res_map;
+    while(QFile::exists(Path_video_info_ini));
+    //=========
+    QFile video_info_ini(Path_video_info_ini);
+    video_info_ini.remove();
+    if (video_info_ini.open(QIODevice::ReadWrite | QIODevice::Text)) //QIODevice::ReadWrite支持读写
+    {
+        QTextStream stream(&video_info_ini);
+        stream << ffprobe_output_str;
+    }
+    video_info_ini.close();
+    //================== 读取ini获得参数 =====================
+    QSettings *configIniRead_videoInfo = new QSettings(Path_video_info_ini, QSettings::IniFormat);
+    QString width_str = configIniRead_videoInfo->value("/streams.stream.0/width").toString().trimmed();
+    QString height_str = configIniRead_videoInfo->value("/streams.stream.0/height").toString().trimmed();
+    video_info_ini.remove();
+    //=======================
+    if(width_str!="" && height_str!="")
+    {
+        int width_int = width_str.toInt();
+        int height_int = height_str.toInt();
+        if(width_int>0 && height_int>0)
+        {
+            QMap<QString,int> res_map;
+            res_map["height"] = height_int;
+            res_map["width"] = width_int;
+            return res_map;
+        }
+    }
+    emit Send_TextBrowser_NewMessage(tr("ERROR! Unable to read the resolution of the video. [")+VideoFileFullPath+"]");
+    QMap<QString,int> empty;
+    empty["height"] = 0;
+    empty["width"] = 0;
+    return empty;
 }
 
 /*
@@ -108,19 +225,7 @@ void MainWindow::video_AssembleVideoClips(QString VideoClipsFolderPath,QString V
 {
     emit Send_TextBrowser_NewMessage(tr("Start assembling video with clips:[")+video_mp4_scaled_fullpath+"]");
     //=================
-    QString encoder_audio_cmd="";
-    QString bitrate_audio_cmd="";
-    //=======
-    if(ui->checkBox_videoSettings_isEnabled->isChecked())
-    {
-        if(ui->lineEdit_encoder_audio->text()!="")
-            encoder_audio_cmd=" -c:a "+ui->lineEdit_encoder_audio->text()+" ";
-        if(ui->spinBox_bitrate_audio->value()>0)
-            bitrate_audio_cmd=" -b:a "+QString::number(ui->spinBox_bitrate_audio->value(),10)+"k ";
-    }
-    //==============================
     QStringList VideoClips_Scan_list = file_getFileNames_in_Folder_nofilter(VideoClipsFolderPath);
-    int VideoClipsNum = VideoClips_Scan_list.count();
     QStringList VideoClips_fileName_list;
     VideoClips_fileName_list.clear();
     QFileInfo vfinfo(video_mp4_scaled_fullpath);
@@ -128,7 +233,7 @@ void MainWindow::video_AssembleVideoClips(QString VideoClipsFolderPath,QString V
     /*
     生成视频片段文件完整路径QStringList
     */
-    for (int VideoNameNo = 1; VideoNameNo<=VideoClipsNum; VideoNameNo++)
+    for (int VideoNameNo = 0; VideoNameNo<VideoClips_Scan_list.size(); VideoNameNo++)
     {
         QString VideoClip_FullPath_tmp = VideoClipsFolderPath+"/"+QString::number(VideoNameNo,10)+".mp4";
         if(QFile::exists(VideoClip_FullPath_tmp))
@@ -151,10 +256,11 @@ void MainWindow::video_AssembleVideoClips(QString VideoClipsFolderPath,QString V
     //================ 将文件列表写入文件保存 ================
     QFileInfo videoFileInfo(video_mp4_scaled_fullpath);
     QString Path_FFMpegFileList = "";
+    int FileNo = 0;
     do
     {
-        int random = QRandomGenerator::global()->bounded(1,1000);
-        Path_FFMpegFileList = video_dir+"/"+file_getBaseName(video_mp4_scaled_fullpath)+"_fileList_"+QString::number(random,10)+"_Waifu2xEX.txt";
+        FileNo++;
+        Path_FFMpegFileList = video_dir+"/"+file_getBaseName(video_mp4_scaled_fullpath)+"_fileList_"+QString::number(FileNo,10)+"_Waifu2xEX.txt";
     }
     while(QFile::exists(Path_FFMpegFileList));
     //=========
@@ -184,7 +290,7 @@ void MainWindow::video_AssembleVideoClips(QString VideoClipsFolderPath,QString V
     }
     //================= 获取比特率 =================
     QString bitrate_video_cmd="";
-    if(ui->spinBox_bitrate_vid->value()>0&&ui->checkBox_videoSettings_isEnabled->isChecked())
+    if(ui->spinBox_bitrate_vid->value()>0 && ui->groupBox_video_settings->isChecked())
     {
         bitrate_video_cmd = " -b:v "+QString::number(ui->spinBox_bitrate_vid->value(),10)+"k ";
     }
@@ -195,12 +301,28 @@ void MainWindow::video_AssembleVideoClips(QString VideoClipsFolderPath,QString V
     }
     //================= 读取视频编码器设定 ==============
     QString encoder_video_cmd="";
-    if(ui->checkBox_videoSettings_isEnabled->isChecked()&&ui->lineEdit_encoder_vid->text()!="")
+    if(ui->groupBox_video_settings->isChecked() && ui->lineEdit_encoder_vid->text().trimmed()!="")
     {
-        encoder_video_cmd = " -c:v "+ui->lineEdit_encoder_vid->text()+" ";//图像编码器
+        encoder_video_cmd = " -c:v "+ui->lineEdit_encoder_vid->text().trimmed()+" ";//图像编码器
+    }
+    //=============== 读取音频编码设定 ====================
+    QString encoder_audio_cmd="";
+    QString bitrate_audio_cmd="";
+    if(ui->groupBox_video_settings->isChecked())
+    {
+        if(ui->lineEdit_encoder_audio->text().trimmed()!="")
+            encoder_audio_cmd=" -c:a "+ui->lineEdit_encoder_audio->text().trimmed()+" ";
+        if(ui->spinBox_bitrate_audio->value()>0)
+            bitrate_audio_cmd=" -b:a "+QString::number(ui->spinBox_bitrate_audio->value(),10)+"k ";
+    }
+    //==================
+    QString Extra_command = "";
+    if(ui->groupBox_video_settings->isChecked() && ui->lineEdit_ExCommand_output->text().trimmed()!="")
+    {
+        Extra_command = " "+ui->lineEdit_ExCommand_output->text().trimmed()+" ";//附加指令
     }
     //================ 获取fps =====================
-    QString fps_video_cmd="";
+    QString fps_video_cmd=" ";
     QString fps = video_get_fps(Mp4Clip_forReadInfo).trimmed();
     if(fps != "0.0")
     {
@@ -210,18 +332,27 @@ void MainWindow::video_AssembleVideoClips(QString VideoClipsFolderPath,QString V
     QString CMD = "";
     if(QFile::exists(AudioPath))
     {
-        CMD = "\""+ffmpeg_path+"\" -y -f concat -safe 0 "+fps_video_cmd+" -i \""+Path_FFMpegFileList+"\" -i \""+AudioPath+"\""+bitrate_video_cmd+encoder_video_cmd+fps_video_cmd+encoder_audio_cmd+bitrate_audio_cmd+"\""+video_mp4_scaled_fullpath+"\"";
+        CMD = "\""+ffmpeg_path+"\" -y -f concat -safe 0 "+fps_video_cmd+" -i \""+Path_FFMpegFileList+"\" "+fps_video_cmd+" -i \""+AudioPath+"\" "+fps_video_cmd+" "+bitrate_video_cmd+encoder_video_cmd+fps_video_cmd+encoder_audio_cmd+bitrate_audio_cmd+Extra_command+"\""+video_mp4_scaled_fullpath+"\"";
     }
     else
     {
-        CMD = "\""+ffmpeg_path+"\" -y -f concat -safe 0 "+fps_video_cmd+" -i \""+Path_FFMpegFileList+"\""+bitrate_video_cmd+encoder_video_cmd+fps_video_cmd+"\""+video_mp4_scaled_fullpath+"\"";
+        CMD = "\""+ffmpeg_path+"\" -y -f concat -safe 0 "+fps_video_cmd+" -i \""+Path_FFMpegFileList+"\""+bitrate_video_cmd+encoder_video_cmd+fps_video_cmd+Extra_command+"\""+video_mp4_scaled_fullpath+"\"";
     }
     QProcess AssembleVideo;
     AssembleVideo.start(CMD);
     while(!AssembleVideo.waitForStarted(100)&&!QProcess_stop) {}
-    while(!AssembleVideo.waitForFinished(100)&&!QProcess_stop) {}
+    while(!AssembleVideo.waitForFinished(100)&&!QProcess_stop)
+    {
+        if(waifu2x_STOP)
+        {
+            AssembleVideo.close();
+            QFile::remove(video_mp4_scaled_fullpath);
+            QFile::remove(Path_FFMpegFileList);
+            return;
+        }
+    }
     //检查是否发生错误
-    if(!QFile::exists(video_mp4_scaled_fullpath))//检查是否成功生成视频
+    if(QFile::exists(video_mp4_scaled_fullpath)==false)//检查是否成功生成视频
     {
         MultiLine_ErrorOutput_QMutex.lock();
         emit Send_TextBrowser_NewMessage(tr("Error output for FFmpeg when processing:[")+video_mp4_scaled_fullpath+"]");
@@ -247,32 +378,64 @@ void MainWindow::video_video2images_ProcessBySegment(QString VideoPath,QString F
     emit Send_TextBrowser_NewMessage(tr("Start splitting video: [")+VideoPath+"]");
     //=================
     QString ffmpeg_path = Current_Path+"/ffmpeg_waifu2xEX.exe";
-    QFileInfo vfinfo(VideoPath);
-    QString video_dir = file_getFolderPath(vfinfo);
-    QString video_filename = file_getBaseName(VideoPath);
-    QString video_ext = vfinfo.suffix();
-    QString video_mp4_fullpath = video_dir+"/"+video_filename+".mp4";
-    //==============
-    if(video_ext!="mp4")
+    QString video_mp4_fullpath = VideoPath;
+    //================ 获取fps =====================
+    QString fps_video_cmd=" ";
+    QString fps = video_get_fps(video_mp4_fullpath).trimmed();
+    if(fps != "0.0")
     {
-        video_mp4_fullpath = video_dir+"/"+video_filename+"_"+video_ext+".mp4";
-    }
-    else
-    {
-        video_mp4_fullpath = video_dir+"/"+video_filename+".mp4";
+        fps_video_cmd = " -r "+fps+" ";
     }
     //=====================
     int FrameNumDigits = video_get_frameNumDigits(video_mp4_fullpath);
+    if(FrameNumDigits==0)return;
+    QFile::remove(isPreVFIDone_MarkFilePath(VideoPath));
+    //=====================
     QProcess video_splitFrame;
-    video_splitFrame.start("\""+ffmpeg_path+"\" -y -i \""+video_mp4_fullpath+"\" -ss "+QString::number(StartTime,10)+" -t "+QString::number(SegmentDuration,10)+" \""+FrameFolderPath.replace("%","%%")+"/%0"+QString::number(FrameNumDigits,10)+"d.png\"");
+    video_splitFrame.start("\""+ffmpeg_path+"\" -y"+fps_video_cmd+"-i \""+video_mp4_fullpath+"\" -ss "+QString::number(StartTime,10)+" -t "+QString::number(SegmentDuration,10)+fps_video_cmd+" \""+FrameFolderPath.replace("%","%%")+"/%0"+QString::number(FrameNumDigits,10)+"d.png\"");
     while(!video_splitFrame.waitForStarted(100)&&!QProcess_stop) {}
     while(!video_splitFrame.waitForFinished(100)&&!QProcess_stop) {}
     //============== 尝试在Win7下可能兼容的指令 ================================
     if(file_isDirEmpty(FrameFolderPath))
     {
-        video_splitFrame.start("\""+ffmpeg_path+"\" -y -i \""+video_mp4_fullpath+"\" -ss "+QString::number(StartTime,10)+" -t "+QString::number(SegmentDuration,10)+" \""+FrameFolderPath.replace("%","%%")+"/%%0"+QString::number(FrameNumDigits,10)+"d.png\"");
+        video_splitFrame.start("\""+ffmpeg_path+"\" -y"+fps_video_cmd+"-i \""+video_mp4_fullpath+"\" -ss "+QString::number(StartTime,10)+" -t "+QString::number(SegmentDuration,10)+fps_video_cmd+" \""+FrameFolderPath.replace("%","%%")+"/%%0"+QString::number(FrameNumDigits,10)+"d.png\"");
         while(!video_splitFrame.waitForStarted(100)&&!QProcess_stop) {}
         while(!video_splitFrame.waitForFinished(100)&&!QProcess_stop) {}
+    }
+    //======== 插帧 =========
+    QFileInfo vfinfo(VideoPath);
+    QString video_dir = file_getFolderPath(vfinfo);
+    QString video_filename = file_getBaseName(VideoPath);
+    QString VFI_FolderPath_tmp = video_dir+"/"+video_filename+"_PreVFI_W2xEX";
+    if(ui->checkBox_VfiAfterScale_VFI->isChecked()==false && ui->groupBox_FrameInterpolation->isChecked()==true && ui->checkBox_FrameInterpolationOnly_Video->isChecked()==false) //如果启用了插帧
+    {
+        //如果检测到完整的已经插帧的帧缓存
+        if(file_isDirExist(VFI_FolderPath_tmp) && (file_getFileNames_in_Folder_nofilter(FrameFolderPath).size() * ui->spinBox_MultipleOfFPS_VFI->value() == file_getFileNames_in_Folder_nofilter(VFI_FolderPath_tmp).size()))
+        {
+            file_DelDir(FrameFolderPath);
+            QDir VFI_FolderPath_tmp_qdir(VFI_FolderPath_tmp);
+            VFI_FolderPath_tmp_qdir.rename(VFI_FolderPath_tmp,FrameFolderPath);
+            return;
+        }
+        else
+        {
+            if(FrameInterpolation(FrameFolderPath,VFI_FolderPath_tmp)==true)
+            {
+                //如果插帧成功
+                file_DelDir(FrameFolderPath);
+                QDir VFI_FolderPath_tmp_qdir(VFI_FolderPath_tmp);
+                VFI_FolderPath_tmp_qdir.rename(VFI_FolderPath_tmp,FrameFolderPath);
+                file_generateMarkFile(isPreVFIDone_MarkFilePath(VideoPath),QString("%1").arg(ui->spinBox_MultipleOfFPS_VFI->value()));
+                return;
+            }
+            else
+            {
+                file_DelDir(FrameFolderPath);
+                file_DelDir(VFI_FolderPath_tmp);
+                if(waifu2x_STOP==false)emit Send_TextBrowser_NewMessage(tr("Failed to interpolate frames of video:[")+VideoPath+"]");
+                return;
+            }
+        }
     }
     //====================================
     emit Send_TextBrowser_NewMessage(tr("Finish splitting video: [")+VideoPath+"]");
@@ -284,6 +447,7 @@ void MainWindow::video_video2images_ProcessBySegment(QString VideoPath,QString F
 void MainWindow::video_get_audio(QString VideoPath,QString AudioPath)
 {
     emit Send_TextBrowser_NewMessage(tr("Extract audio from video: [")+VideoPath+"]");
+    //==============================================
     QString ffmpeg_path = Current_Path+"/ffmpeg_waifu2xEX.exe";
     QFile::remove(AudioPath);
     QProcess video_splitSound;
@@ -302,64 +466,75 @@ void MainWindow::video_get_audio(QString VideoPath,QString AudioPath)
 /*
 将视频转换为mp4
 */
-void MainWindow::video_2mp4(QString VideoPath)
+QString MainWindow::video_To_CFRMp4(QString VideoPath)
 {
-    //=================
     QFileInfo vfinfo(VideoPath);
     QString video_ext = vfinfo.suffix();
+    bool isVFR = false;
     //==============
-    if(video_ext!="mp4")
+    if(video_ext.toLower()=="mp4")
     {
-        emit Send_TextBrowser_NewMessage(tr("Start converting video: [")+VideoPath+tr("] to mp4"));
-        QString ffmpeg_path = Current_Path+"/ffmpeg_waifu2xEX.exe";
-        QString video_dir = file_getFolderPath(vfinfo);
-        QString video_filename = file_getBaseName(VideoPath);
-        QString video_mp4_fullpath = video_dir+"/"+video_filename+"_"+video_ext+".mp4";
-        QFile::remove(video_mp4_fullpath);
-        QString vcodec_copy_cmd = "";
-        QString acodec_copy_cmd = "";
-        QString bitrate_vid_cmd = "";
-        QString bitrate_audio_cmd = "";
-        QString Extra_command = "";
-        QString bitrate_OverAll = "";
-        if(ui->checkBox_videoSettings_isEnabled->isChecked())
+        if(video_isVFR(VideoPath)==false)
         {
-            Extra_command = ui->lineEdit_ExCommand_2mp4->text().trimmed();
-            if(ui->checkBox_vcodec_copy_2mp4->isChecked())
-            {
-                vcodec_copy_cmd = " -vcodec copy ";
-            }
-            else
-            {
-                if(ui->spinBox_bitrate_vid_2mp4->value()>0&&ui->spinBox_bitrate_audio_2mp4->value()>0)bitrate_vid_cmd = " -b:v "+QString::number(ui->spinBox_bitrate_vid_2mp4->value(),10)+"k ";
-            }
-            if(ui->checkBox_acodec_copy_2mp4->isChecked())
-            {
-                acodec_copy_cmd = " -acodec copy ";
-            }
-            else
-            {
-                if(ui->spinBox_bitrate_vid_2mp4->value()>0&&ui->spinBox_bitrate_audio_2mp4->value()>0)bitrate_audio_cmd = " -b:a "+QString::number(ui->spinBox_bitrate_audio_2mp4->value(),10)+"k ";
-            }
+            return VideoPath;
         }
-        if((ui->checkBox_videoSettings_isEnabled->isChecked()==false)||(ui->spinBox_bitrate_vid_2mp4->value()<=0||ui->spinBox_bitrate_audio_2mp4->value()<=0))
+        else
         {
-            QString BitRate = video_get_bitrate(VideoPath);
-            if(BitRate!="")bitrate_OverAll = " -b "+BitRate+" ";
-        }
-        //=====
-        QProcess video_tomp4;
-        video_tomp4.start("\""+ffmpeg_path+"\" -y -i \""+VideoPath+"\" "+vcodec_copy_cmd+acodec_copy_cmd+bitrate_vid_cmd+bitrate_audio_cmd+bitrate_OverAll+" "+Extra_command+" \""+video_mp4_fullpath+"\"");
-        while(!video_tomp4.waitForStarted(100)&&!QProcess_stop) {}
-        while(!video_tomp4.waitForFinished(100)&&!QProcess_stop) {}
-        //======
-        if(QFile::exists(video_mp4_fullpath))
-        {
-            emit Send_TextBrowser_NewMessage(tr("Successfully converted video: [")+VideoPath+tr("] to mp4"));
+            isVFR = true;
         }
     }
+    QString video_dir = file_getFolderPath(vfinfo);
+    QString video_filename = file_getBaseName(VideoPath);
+    QString video_mp4_fullpath = video_dir+"/"+video_filename+"_"+video_ext+"_CfrMp4.mp4";
+    if(QFile::exists(video_mp4_fullpath))return video_mp4_fullpath;
+    //=================
+    emit Send_TextBrowser_NewMessage(tr("Start converting video: [")+VideoPath+tr("] to CFR MP4."));
+    QString ffmpeg_path = Current_Path+"/ffmpeg_waifu2xEX.exe";
+    QFile::remove(video_mp4_fullpath);
+    QString vcodec_copy_cmd = "";
+    QString acodec_copy_cmd = "";
+    QString bitrate_vid_cmd = "";
+    QString bitrate_audio_cmd = "";
+    QString Extra_command = "";
+    QString bitrate_OverAll = "";
+    if(ui->groupBox_video_settings->isChecked())
+    {
+        Extra_command = ui->lineEdit_ExCommand_2mp4->text().trimmed();
+        if(ui->checkBox_vcodec_copy_2mp4->isChecked()&&isVFR==false)
+        {
+            vcodec_copy_cmd = " -vcodec copy ";
+        }
+        else
+        {
+            if(ui->spinBox_bitrate_vid_2mp4->value()>0&&ui->spinBox_bitrate_audio_2mp4->value()>0)bitrate_vid_cmd = " -b:v "+QString::number(ui->spinBox_bitrate_vid_2mp4->value(),10)+"k ";
+        }
+        if(ui->checkBox_acodec_copy_2mp4->isChecked()&&isVFR==false)
+        {
+            acodec_copy_cmd = " -acodec copy ";
+        }
+        else
+        {
+            if(ui->spinBox_bitrate_vid_2mp4->value()>0&&ui->spinBox_bitrate_audio_2mp4->value()>0)bitrate_audio_cmd = " -b:a "+QString::number(ui->spinBox_bitrate_audio_2mp4->value(),10)+"k ";
+        }
+    }
+    if((ui->groupBox_video_settings->isChecked()==false)||(ui->spinBox_bitrate_vid_2mp4->value()<=0||ui->spinBox_bitrate_audio_2mp4->value()<=0))
+    {
+        QString BitRate = video_get_bitrate(VideoPath);
+        if(BitRate!="")bitrate_OverAll = " -b "+BitRate+" ";
+    }
+    //=====
+    QProcess video_tomp4;
+    video_tomp4.start("\""+ffmpeg_path+"\" -y -i \""+VideoPath+"\" -vsync 1 "+vcodec_copy_cmd+acodec_copy_cmd+bitrate_vid_cmd+bitrate_audio_cmd+bitrate_OverAll+" "+Extra_command+" \""+video_mp4_fullpath+"\"");
+    while(!video_tomp4.waitForStarted(100)&&!QProcess_stop) {}
+    while(!video_tomp4.waitForFinished(100)&&!QProcess_stop) {}
+    //======
+    if(QFile::exists(video_mp4_fullpath))
+    {
+        emit Send_TextBrowser_NewMessage(tr("Successfully converted video: [")+VideoPath+tr("] to CFR MP4."));
+        return video_mp4_fullpath;
+    }
+    return "null";
 }
-
 //===============
 //获取时长(秒)
 //===============
@@ -368,7 +543,7 @@ int MainWindow::video_get_duration(QString videoPath)
     emit Send_TextBrowser_NewMessage(tr("Get duration of the video:[")+videoPath+"]");
     //========================= 调用ffprobe读取视频信息 ======================
     QProcess *Get_Duration_process = new QProcess();
-    QString cmd = "\""+Current_Path+"/ffprobe_waifu2xEX.exe\" -i \""+videoPath+"\" -v quiet -print_format ini -show_format";
+    QString cmd = "\""+Current_Path+"/ffprobe_waifu2xEX.exe\" -i \""+videoPath+"\" -select_streams v -show_streams -v quiet -print_format ini -show_format";
     Get_Duration_process->start(cmd);
     while(!Get_Duration_process->waitForStarted(100)&&!QProcess_stop) {}
     while(!Get_Duration_process->waitForFinished(100)&&!QProcess_stop) {}
@@ -378,10 +553,11 @@ int MainWindow::video_get_duration(QString videoPath)
     QFileInfo videoFileInfo(videoPath);
     QString Path_video_info_ini = "";
     QString video_dir = file_getFolderPath(videoPath);
+    int FileNo = 0;
     do
     {
-        int random = QRandomGenerator::global()->bounded(1,1000);
-        Path_video_info_ini = video_dir+"/"+file_getBaseName(videoPath)+"_videoInfo_"+QString::number(random,10)+"_Waifu2xEX.ini";
+        FileNo++;
+        Path_video_info_ini = video_dir+"/"+file_getBaseName(videoPath)+"_videoInfo_"+QString::number(FileNo,10)+"_Waifu2xEX.ini";
     }
     while(QFile::exists(Path_video_info_ini));
     //=========
@@ -414,10 +590,6 @@ int MainWindow::video_get_duration(QString videoPath)
 */
 QString MainWindow::video_AudioDenoise(QString OriginalAudioPath)
 {
-    /*
-    sox 输入音频.wav -n noiseprof 噪音分析.prof
-    sox 输入音频.wav 输出音频.wav noisered 噪音分析.prof 0.21
-    */
     emit Send_TextBrowser_NewMessage(tr("Starting to denoise audio.[")+OriginalAudioPath+"]");
     //===========
     QFileInfo fileinfo(OriginalAudioPath);
@@ -454,7 +626,7 @@ QString MainWindow::video_AudioDenoise(QString OriginalAudioPath)
 /*
 保存进度
 */
-void MainWindow::video_write_Progress_ProcessBySegment(QString VideoConfiguration_fullPath,int StartTime,bool isSplitComplete,bool isScaleComplete,int OLDSegmentDuration)
+void MainWindow::video_write_Progress_ProcessBySegment(QString VideoConfiguration_fullPath,int StartTime,bool isSplitComplete,bool isScaleComplete,int OLDSegmentDuration,int LastVideoClipNo)
 {
     QSettings *configIniWrite = new QSettings(VideoConfiguration_fullPath, QSettings::IniFormat);
     configIniWrite->setIniCodec(QTextCodec::codecForName("UTF-8"));
@@ -463,11 +635,12 @@ void MainWindow::video_write_Progress_ProcessBySegment(QString VideoConfiguratio
     configIniWrite->setValue("/Progress/isSplitComplete", isSplitComplete);
     configIniWrite->setValue("/Progress/isScaleComplete", isScaleComplete);
     configIniWrite->setValue("/Progress/OLDSegmentDuration", OLDSegmentDuration);
+    configIniWrite->setValue("/Progress/LastVideoClipNo", LastVideoClipNo);
 }
 /*
 保存视频配置
 */
-void MainWindow::video_write_VideoConfiguration(QString VideoConfiguration_fullPath,int ScaleRatio,int DenoiseLevel,bool CustRes_isEnabled,int CustRes_height,int CustRes_width,QString EngineName,bool isProcessBySegment,QString VideoClipsFolderPath,QString VideoClipsFolderName)
+void MainWindow::video_write_VideoConfiguration(QString VideoConfiguration_fullPath,int ScaleRatio,int DenoiseLevel,bool CustRes_isEnabled,int CustRes_height,int CustRes_width,QString EngineName,bool isProcessBySegment,QString VideoClipsFolderPath,QString VideoClipsFolderName,bool isVideoFrameInterpolationEnabled,int MultipleOfFPS)
 {
     QSettings *configIniWrite = new QSettings(VideoConfiguration_fullPath, QSettings::IniFormat);
     configIniWrite->setIniCodec(QTextCodec::codecForName("UTF-8"));
@@ -483,10 +656,14 @@ void MainWindow::video_write_VideoConfiguration(QString VideoConfiguration_fullP
     configIniWrite->setValue("/VideoConfiguration/isProcessBySegment", isProcessBySegment);
     configIniWrite->setValue("/VideoConfiguration/VideoClipsFolderPath", VideoClipsFolderPath);
     configIniWrite->setValue("/VideoConfiguration/VideoClipsFolderName", VideoClipsFolderName);
+    configIniWrite->setValue("/VideoConfiguration/isVideoFrameInterpolationEnabled", isVideoFrameInterpolationEnabled);
+    configIniWrite->setValue("/VideoConfiguration/MultipleOfFPS", MultipleOfFPS);
     //==================== 存储进度 ==================================
     configIniWrite->setValue("/Progress/StartTime", 0);
     configIniWrite->setValue("/Progress/isSplitComplete", false);
     configIniWrite->setValue("/Progress/isScaleComplete", false);
+    configIniWrite->setValue("/Progress/OLDSegmentDuration", -1);
+    configIniWrite->setValue("/Progress/LastVideoClipNo", -1);
 }
 
 QString MainWindow::video_get_bitrate_AccordingToRes_FrameFolder(QString ScaledFrameFolderPath)
@@ -528,7 +705,7 @@ QString MainWindow::video_get_bitrate(QString videoPath)
     emit Send_TextBrowser_NewMessage(tr("Get bitrate of the video:[")+videoPath+"]");
     //========================= 调用ffprobe读取视频信息 ======================
     QProcess *Get_Bitrate_process = new QProcess();
-    QString cmd = "\""+Current_Path+"/ffprobe_waifu2xEX.exe\" -i \""+videoPath+"\" -v quiet -print_format ini -show_format";
+    QString cmd = "\""+Current_Path+"/ffprobe_waifu2xEX.exe\" -i \""+videoPath+"\" -select_streams v -show_streams -v quiet -print_format ini -show_format";
     Get_Bitrate_process->start(cmd);
     while(!Get_Bitrate_process->waitForStarted(100)&&!QProcess_stop) {}
     while(!Get_Bitrate_process->waitForFinished(100)&&!QProcess_stop) {}
@@ -545,10 +722,11 @@ QString MainWindow::video_get_bitrate(QString videoPath)
     QFileInfo videoFileInfo(videoPath);
     QString Path_video_info_ini = "";
     QString video_dir = file_getFolderPath(videoPath);
+    int FileNo = 0;
     do
     {
-        int random = QRandomGenerator::global()->bounded(1,1000);
-        Path_video_info_ini = video_dir+"/"+file_getBaseName(videoPath)+"_videoInfo_"+QString::number(random,10)+"_Waifu2xEX.ini";
+        FileNo++;
+        Path_video_info_ini = video_dir+"/"+file_getBaseName(videoPath)+"_videoInfo_"+QString::number(FileNo,10)+"_Waifu2xEX.ini";
     }
     while(QFile::exists(Path_video_info_ini));
     //=========
@@ -568,27 +746,109 @@ QString MainWindow::video_get_bitrate(QString videoPath)
     video_info_ini.remove();
     return BitRate;
 }
-
+/*
+获取视频FPS
+*/
 QString MainWindow::video_get_fps(QString videoPath)
 {
-    QString program = Current_Path+"/python_ext_waifu2xEX.exe";
-    QProcess vid;
-    vid.start("\""+program+"\" \""+videoPath+"\" fps");
-    while(!vid.waitForStarted(100)&&!QProcess_stop) {}
-    while(!vid.waitForFinished(100)&&!QProcess_stop) {}
-    QString fps=vid.readAllStandardOutput();
-    return fps;
+    //========================= 调用ffprobe读取视频信息 ======================
+    QProcess *Get_VideoFPS_process = new QProcess();
+    QString cmd = "\""+Current_Path+"/ffprobe_waifu2xEX.exe\" -i \""+videoPath+"\" -select_streams v -show_streams -v quiet -print_format ini -show_format";
+    Get_VideoFPS_process->start(cmd);
+    while(!Get_VideoFPS_process->waitForStarted(100)&&!QProcess_stop) {}
+    while(!Get_VideoFPS_process->waitForFinished(100)&&!QProcess_stop) {}
+    //============= 保存ffprobe输出的ini格式文本 =============
+    QString ffprobe_output_str = Get_VideoFPS_process->readAllStandardOutput();
+    //================ 将ini写入文件保存 ================
+    QFileInfo videoFileInfo(videoPath);
+    QString Path_video_info_ini = "";
+    QString video_dir = file_getFolderPath(videoPath);
+    int FileNo = 0;
+    do
+    {
+        FileNo++;
+        Path_video_info_ini = video_dir+"/"+file_getBaseName(videoPath)+"_videoInfo_"+QString::number(FileNo,10)+"_Waifu2xEX.ini";
+    }
+    while(QFile::exists(Path_video_info_ini));
+    //=========
+    QFile video_info_ini(Path_video_info_ini);
+    video_info_ini.remove();
+    if (video_info_ini.open(QIODevice::ReadWrite | QIODevice::Text)) //QIODevice::ReadWrite支持读写
+    {
+        QTextStream stream(&video_info_ini);
+        stream << ffprobe_output_str;
+    }
+    video_info_ini.close();
+    //================== 读取ini获得参数 =====================
+    QSettings *configIniRead_videoInfo = new QSettings(Path_video_info_ini, QSettings::IniFormat);
+    QString FPS_Division = configIniRead_videoInfo->value("/streams.stream.0/avg_frame_rate").toString().trimmed();
+    video_info_ini.remove();
+    //=======================
+    if(FPS_Division=="")
+    {
+        return "0.0";
+    }
+    //=======================
+    QStringList FPS_Nums = FPS_Division.split("/");
+    if(FPS_Nums.size()!=2)
+    {
+        return "0.0";
+    }
+    double FPS_Num_0 = FPS_Nums.at(0).toDouble();
+    double FPS_Num_1 = FPS_Nums.at(1).toDouble();
+    if(FPS_Num_0<=0||FPS_Num_1<=0)
+    {
+        return "0.0";
+    }
+    return FPS_Division;
+}
+
+int MainWindow::video_get_frameNum(QString videoPath)
+{
+    //========================= 调用ffprobe读取视频信息 ======================
+    QProcess *Get_VideoFrameNumDigits_process = new QProcess();
+    QString cmd = "\""+Current_Path+"/ffprobe_waifu2xEX.exe\" -i \""+videoPath+"\" -select_streams v -show_streams -v quiet -print_format ini -show_format";
+    Get_VideoFrameNumDigits_process->start(cmd);
+    while(!Get_VideoFrameNumDigits_process->waitForStarted(100)&&!QProcess_stop) {}
+    while(!Get_VideoFrameNumDigits_process->waitForFinished(100)&&!QProcess_stop) {}
+    //============= 保存ffprobe输出的ini格式文本 =============
+    QString ffprobe_output_str = Get_VideoFrameNumDigits_process->readAllStandardOutput();
+    //================ 将ini写入文件保存 ================
+    QFileInfo videoFileInfo(videoPath);
+    QString Path_video_info_ini = "";
+    QString video_dir = file_getFolderPath(videoPath);
+    int FileNo = 0;
+    do
+    {
+        FileNo++;
+        Path_video_info_ini = video_dir+"/"+file_getBaseName(videoPath)+"_videoInfo_"+QString::number(FileNo,10)+"_Waifu2xEX.ini";
+    }
+    while(QFile::exists(Path_video_info_ini));
+    //=========
+    QFile video_info_ini(Path_video_info_ini);
+    video_info_ini.remove();
+    if (video_info_ini.open(QIODevice::ReadWrite | QIODevice::Text)) //QIODevice::ReadWrite支持读写
+    {
+        QTextStream stream(&video_info_ini);
+        stream << ffprobe_output_str;
+    }
+    video_info_ini.close();
+    //================== 读取ini获得参数 =====================
+    QSettings *configIniRead_videoInfo = new QSettings(Path_video_info_ini, QSettings::IniFormat);
+    QString FrameNum_Str = configIniRead_videoInfo->value("/streams.stream.0/nb_frames").toString().trimmed();
+    video_info_ini.remove();
+    int FrameNum = FrameNum_Str.toInt();
+    if(FrameNum<1)
+    {
+        emit Send_TextBrowser_NewMessage(tr("ERROR! Unable to read the number of frames of the video: [")+videoPath+"]");
+        return 0;
+    }
+    return FrameNum;
 }
 
 int MainWindow::video_get_frameNumDigits(QString videoPath)
 {
-    QString program = Current_Path+"/python_ext_waifu2xEX.exe";
-    QProcess vid;
-    vid.start("\""+program+"\" \""+videoPath+"\" countframe");
-    while(!vid.waitForStarted(100)&&!QProcess_stop) {}
-    while(!vid.waitForFinished(100)&&!QProcess_stop) {}
-    int FrameNum = vid.readAllStandardOutput().toInt();
-    int frameNumDigits=1+(int)log10(FrameNum);
+    int frameNumDigits=1+(int)log10(video_get_frameNum(videoPath));
     return frameNumDigits;
 }
 
@@ -597,91 +857,86 @@ void MainWindow::video_video2images(QString VideoPath,QString FrameFolderPath,QS
     emit Send_TextBrowser_NewMessage(tr("Start splitting video: [")+VideoPath+"]");
     //=================
     QString ffmpeg_path = Current_Path+"/ffmpeg_waifu2xEX.exe";
-    QFileInfo vfinfo(VideoPath);
-    QString video_dir = file_getFolderPath(vfinfo);
-    QString video_filename = file_getBaseName(VideoPath);
-    QString video_ext = vfinfo.suffix();
-    QString video_mp4_fullpath = video_dir+"/"+video_filename+".mp4";
-    //==============
-    if(video_ext!="mp4")
+    //================ 获取fps =====================
+    QString fps_video_cmd=" ";
+    QString fps = video_get_fps(VideoPath).trimmed();
+    if(fps != "0.0")
     {
-        video_mp4_fullpath = video_dir+"/"+video_filename+"_"+video_ext+".mp4";
-    }
-    else
-    {
-        video_mp4_fullpath = video_dir+"/"+video_filename+".mp4";
-    }
-    //======= 转换到mp4 =======
-    if(video_ext!="mp4")
-    {
-        QFile::remove(video_mp4_fullpath);
-        QString vcodec_copy_cmd = "";
-        QString acodec_copy_cmd = "";
-        QString bitrate_vid_cmd = "";
-        QString bitrate_audio_cmd = "";
-        QString Extra_command = "";
-        QString bitrate_OverAll = "";
-        if(ui->checkBox_videoSettings_isEnabled->isChecked())
-        {
-            Extra_command = ui->lineEdit_ExCommand_2mp4->text().trimmed();
-            if(ui->checkBox_vcodec_copy_2mp4->isChecked())
-            {
-                vcodec_copy_cmd = " -vcodec copy ";
-            }
-            else
-            {
-                if(ui->spinBox_bitrate_vid_2mp4->value()>0&&ui->spinBox_bitrate_audio_2mp4->value()>0)bitrate_vid_cmd = " -b:v "+QString::number(ui->spinBox_bitrate_vid_2mp4->value(),10)+"k ";
-            }
-            if(ui->checkBox_acodec_copy_2mp4->isChecked())
-            {
-                acodec_copy_cmd = " -acodec copy ";
-            }
-            else
-            {
-                if(ui->spinBox_bitrate_vid_2mp4->value()>0&&ui->spinBox_bitrate_audio_2mp4->value()>0)bitrate_audio_cmd = " -b:a "+QString::number(ui->spinBox_bitrate_audio_2mp4->value(),10)+"k ";
-            }
-        }
-        if((ui->checkBox_videoSettings_isEnabled->isChecked()==false)||(ui->spinBox_bitrate_vid_2mp4->value()<=0||ui->spinBox_bitrate_audio_2mp4->value()<=0))
-        {
-            QString BitRate = video_get_bitrate(VideoPath);
-            if(BitRate!="")bitrate_OverAll = " -b "+BitRate+" ";
-        }
-        //=====
-        QProcess video_tomp4;
-        video_tomp4.start("\""+ffmpeg_path+"\" -y -i \""+VideoPath+"\" "+vcodec_copy_cmd+acodec_copy_cmd+bitrate_vid_cmd+bitrate_audio_cmd+bitrate_OverAll+" "+Extra_command+" \""+video_mp4_fullpath+"\"");
-        while(!video_tomp4.waitForStarted(100)&&!QProcess_stop) {}
-        while(!video_tomp4.waitForFinished(100)&&!QProcess_stop) {}
+        fps_video_cmd = " -r "+fps+" ";
     }
     //=====================
-    int FrameNumDigits = video_get_frameNumDigits(video_mp4_fullpath);
+    int FrameNumDigits = video_get_frameNumDigits(VideoPath);
+    if(FrameNumDigits==0)return;
+    QFile::remove(isPreVFIDone_MarkFilePath(VideoPath));
+    //=====================
     QProcess video_splitFrame;
-    video_splitFrame.start("\""+ffmpeg_path+"\" -y -i \""+video_mp4_fullpath+"\" \""+FrameFolderPath.replace("%","%%")+"/%0"+QString::number(FrameNumDigits,10)+"d.png\"");
+    video_splitFrame.start("\""+ffmpeg_path+"\" -y"+fps_video_cmd+"-i \""+VideoPath+"\" "+fps_video_cmd+" \""+FrameFolderPath.replace("%","%%")+"/%0"+QString::number(FrameNumDigits,10)+"d.png\"");
     while(!video_splitFrame.waitForStarted(100)&&!QProcess_stop) {}
     while(!video_splitFrame.waitForFinished(100)&&!QProcess_stop) {}
     //============== 尝试在Win7下可能兼容的指令 ================================
     if(file_isDirEmpty(FrameFolderPath))
     {
-        video_splitFrame.start("\""+ffmpeg_path+"\" -y -i \""+video_mp4_fullpath+"\" \""+FrameFolderPath.replace("%","%%")+"/%%0"+QString::number(FrameNumDigits,10)+"d.png\"");
+        video_splitFrame.start("\""+ffmpeg_path+"\" -y"+fps_video_cmd+"-i \""+VideoPath+"\" "+fps_video_cmd+" \""+FrameFolderPath.replace("%","%%")+"/%%0"+QString::number(FrameNumDigits,10)+"d.png\"");
         while(!video_splitFrame.waitForStarted(100)&&!QProcess_stop) {}
         while(!video_splitFrame.waitForFinished(100)&&!QProcess_stop) {}
     }
-    QFile::remove(AudioPath);
-    QProcess video_splitSound;
-    video_splitSound.start("\""+ffmpeg_path+"\" -y -i \""+video_mp4_fullpath+"\" \""+AudioPath+"\"");
-    while(!video_splitSound.waitForStarted(100)&&!QProcess_stop) {}
-    while(!video_splitSound.waitForFinished(100)&&!QProcess_stop) {}
+    video_get_audio(VideoPath,AudioPath);//拆分音频
+    //======== 插帧 =========
+    QFileInfo vfinfo(VideoPath);
+    QString video_dir = file_getFolderPath(vfinfo);
+    QString video_filename = file_getBaseName(VideoPath);
+    QString VFI_FolderPath_tmp = video_dir+"/"+video_filename+"_PreVFI_W2xEX";
+    if(ui->checkBox_VfiAfterScale_VFI->isChecked()==false && ui->groupBox_FrameInterpolation->isChecked()==true && ui->checkBox_FrameInterpolationOnly_Video->isChecked()==false) //如果启用了插帧
+    {
+        //如果检测到完整的已经插帧的帧缓存
+        if(file_isDirExist(VFI_FolderPath_tmp) && (file_getFileNames_in_Folder_nofilter(FrameFolderPath).size() * ui->spinBox_MultipleOfFPS_VFI->value() == file_getFileNames_in_Folder_nofilter(VFI_FolderPath_tmp).size()))
+        {
+            file_DelDir(FrameFolderPath);
+            QDir VFI_FolderPath_tmp_qdir(VFI_FolderPath_tmp);
+            VFI_FolderPath_tmp_qdir.rename(VFI_FolderPath_tmp,FrameFolderPath);
+            return;
+        }
+        else
+        {
+            if(FrameInterpolation(FrameFolderPath,VFI_FolderPath_tmp)==true)
+            {
+                //如果插帧成功
+                file_DelDir(FrameFolderPath);
+                QDir VFI_FolderPath_tmp_qdir(VFI_FolderPath_tmp);
+                VFI_FolderPath_tmp_qdir.rename(VFI_FolderPath_tmp,FrameFolderPath);
+                file_generateMarkFile(isPreVFIDone_MarkFilePath(VideoPath),QString("%1").arg(ui->spinBox_MultipleOfFPS_VFI->value()));
+                return;
+            }
+            else
+            {
+                //如果插帧失败且启用了分段处理或仅插帧模式
+                if(ui->checkBox_ProcessVideoBySegment->isChecked()==true || ui->checkBox_FrameInterpolationOnly_Video->isChecked()==true)
+                {
+                    file_DelDir(VFI_FolderPath_tmp);
+                    if(waifu2x_STOP==false)emit Send_TextBrowser_NewMessage(tr("Failed to interpolate frames of video:[")+VideoPath+"]");
+                    return;
+                }
+                //如果插帧失败但是已经超分辨率且没分段
+                else
+                {
+                    file_DelDir(VFI_FolderPath_tmp);
+                    if(waifu2x_STOP==false)emit Send_TextBrowser_NewMessage(tr("Failed to interpolate frames of video:[")+VideoPath+tr("]. Gonna generate a video without frame Interpolation."));
+                }
+            }
+        }
+    }
     //====================================
     emit Send_TextBrowser_NewMessage(tr("Finish splitting video: [")+VideoPath+"]");
 }
 
-int MainWindow::video_images2video(QString VideoPath,QString video_mp4_scaled_fullpath,QString ScaledFrameFolderPath,QString AudioPath,bool CustRes_isEnabled,int CustRes_height,int CustRes_width)
+int MainWindow::video_images2video(QString VideoPath,QString video_mp4_scaled_fullpath,QString ScaledFrameFolderPath,QString AudioPath,bool CustRes_isEnabled,int CustRes_height,int CustRes_width,bool isOverScaled)
 {
     emit Send_TextBrowser_NewMessage(tr("Start assembling video:[")+VideoPath+"]");
     bool Del_DenoisedAudio = false;
     //=================
     QString bitrate_video_cmd="";
     //=======
-    if(ui->checkBox_videoSettings_isEnabled->isChecked()&&(ui->spinBox_bitrate_vid->value()>0))
+    if(ui->groupBox_video_settings->isChecked()&&(ui->spinBox_bitrate_vid->value()>0))
     {
         bitrate_video_cmd=" -b:v "+QString::number(ui->spinBox_bitrate_vid->value(),10)+"k ";
     }
@@ -692,10 +947,16 @@ int MainWindow::video_images2video(QString VideoPath,QString video_mp4_scaled_fu
     }
     //================ 自定义分辨率 ======================
     QString resize_cmd ="";
-    if(CustRes_isEnabled)
+    if(CustRes_isEnabled || isOverScaled)
     {
+        if(isOverScaled==true && CustRes_isEnabled==false)
+        {
+            QMap<QString,int> res_map = video_get_Resolution(VideoPath);
+            int scaleratio_orginal = ui->spinBox_ScaleRatio_video->value();
+            resize_cmd =" -vf scale="+QString::number(res_map["width"]*scaleratio_orginal,10)+":"+QString::number(res_map["height"]*scaleratio_orginal,10)+" ";
+        }
         //============= 如果没有自定义视频参数, 则根据自定义分辨率再计算一次比特率 ==========
-        if(ui->checkBox_videoSettings_isEnabled->isChecked()==false)
+        if(ui->groupBox_video_settings->isChecked()==false || (ui->spinBox_bitrate_vid->value()<1))
         {
             int small_res =0;
             if(CustRes_width<=CustRes_height)
@@ -709,11 +970,11 @@ int MainWindow::video_images2video(QString VideoPath,QString video_mp4_scaled_fu
             bitrate_video_cmd=" -b:v "+QString::number(small_res*6,10)+"k ";
         }
         //=================================================================
-        if(CustRes_AspectRatioMode==Qt::IgnoreAspectRatio)
+        if(CustRes_AspectRatioMode==Qt::IgnoreAspectRatio && CustRes_isEnabled==true)
         {
             resize_cmd =" -vf scale="+QString::number(CustRes_width,10)+":"+QString::number(CustRes_height,10)+" ";
         }
-        if(CustRes_AspectRatioMode==Qt::KeepAspectRatio)
+        if(CustRes_AspectRatioMode==Qt::KeepAspectRatio && CustRes_isEnabled==true)
         {
             if(CustRes_width>=CustRes_height)
             {
@@ -724,7 +985,7 @@ int MainWindow::video_images2video(QString VideoPath,QString video_mp4_scaled_fu
                 resize_cmd =" -vf scale="+QString::number(CustRes_width,10)+":-2 ";
             }
         }
-        if(CustRes_AspectRatioMode==Qt::KeepAspectRatioByExpanding)
+        if(CustRes_AspectRatioMode==Qt::KeepAspectRatioByExpanding && CustRes_isEnabled==true)
         {
             if(CustRes_width>=CustRes_height)
             {
@@ -738,6 +999,7 @@ int MainWindow::video_images2video(QString VideoPath,QString video_mp4_scaled_fu
     }
     QString ffmpeg_path = Current_Path+"/ffmpeg_waifu2xEX.exe";
     int FrameNumDigits = video_get_frameNumDigits(VideoPath);
+    if(FrameNumDigits==0)return 0;
     QFileInfo vfinfo(VideoPath);
     QString video_dir = file_getFolderPath(vfinfo);
     QString video_filename = file_getBaseName(VideoPath);
@@ -748,6 +1010,75 @@ int MainWindow::video_images2video(QString VideoPath,QString video_mp4_scaled_fu
     {
         emit Send_TextBrowser_NewMessage(tr("Error occured when processing [")+VideoPath+tr("]. Error: [Unable to get video frame rate.]"));
         return 0;
+    }
+    //=============== 补帧 ===============
+    QString VFI_FolderPath_tmp = video_dir+"/"+video_filename+"_PostVFI_W2xEX";
+    //如果启用了插帧
+    if(ui->groupBox_FrameInterpolation->isChecked()==true)
+    {
+        bool isPreVFIDone = QFile::exists(isPreVFIDone_MarkFilePath(VideoPath));
+        if((ui->checkBox_VfiAfterScale_VFI->isChecked()==false && ui->checkBox_FrameInterpolationOnly_Video->isChecked()==false) || isPreVFIDone==true)
+        {
+            if(isPreVFIDone==true)
+            {
+                FrameNumDigits = CalNumDigits((file_getFileNames_in_Folder_nofilter(ScaledFrameFolderPath).size()));
+                //==========
+                int Old_MultipleOfFPS = ui->spinBox_MultipleOfFPS_VFI->value();
+                QFile f(isPreVFIDone_MarkFilePath(VideoPath));
+                if(f.open(QIODevice::ReadOnly | QIODevice::Text))
+                {
+                    QTextStream txtInput(&f);
+                    QString lineStr;
+                    lineStr = txtInput.readAll();
+                    int tmp_mof = lineStr.trimmed().toInt();
+                    if(tmp_mof>1)
+                    {
+                        Old_MultipleOfFPS = tmp_mof;
+                    }
+                }
+                //==========
+                QStringList FPS_Nums = fps.split("/");
+                fps = QString("%1/%2").arg(FPS_Nums.at(0).toDouble() * Old_MultipleOfFPS).arg(FPS_Nums.at(1).toDouble());
+            }
+        }
+        else
+        {
+            //如果检测到完整的已经插帧的帧缓存
+            if(file_isDirExist(VFI_FolderPath_tmp) && (file_getFileNames_in_Folder_nofilter(ScaledFrameFolderPath).size() * ui->spinBox_MultipleOfFPS_VFI->value() == file_getFileNames_in_Folder_nofilter(VFI_FolderPath_tmp).size()))
+            {
+                FrameNumDigits = CalNumDigits((file_getFileNames_in_Folder_nofilter(VFI_FolderPath_tmp).size()));
+                ScaledFrameFolderPath = VFI_FolderPath_tmp;
+                QStringList FPS_Nums = fps.split("/");
+                fps = QString("%1/%2").arg(FPS_Nums.at(0).toDouble() * ui->spinBox_MultipleOfFPS_VFI->value()).arg(FPS_Nums.at(1).toDouble());
+            }
+            else
+            {
+                //如果插帧成功
+                if(FrameInterpolation(ScaledFrameFolderPath,VFI_FolderPath_tmp)==true)
+                {
+                    FrameNumDigits = CalNumDigits((file_getFileNames_in_Folder_nofilter(VFI_FolderPath_tmp).size()));
+                    ScaledFrameFolderPath = VFI_FolderPath_tmp;
+                    QStringList FPS_Nums = fps.split("/");
+                    fps = QString("%1/%2").arg(FPS_Nums.at(0).toDouble() * ui->spinBox_MultipleOfFPS_VFI->value()).arg(FPS_Nums.at(1).toDouble());
+                }
+                else
+                {
+                    //如果插帧失败且启用了分段处理或仅插帧模式
+                    if(ui->checkBox_ProcessVideoBySegment->isChecked()==true || ui->checkBox_FrameInterpolationOnly_Video->isChecked()==true)
+                    {
+                        file_DelDir(VFI_FolderPath_tmp);
+                        if(waifu2x_STOP==false)emit Send_TextBrowser_NewMessage(tr("Failed to interpolate frames of video:[")+VideoPath+"]");
+                        return 0;
+                    }
+                    //如果插帧失败但是已经超分辨率且没分段
+                    else
+                    {
+                        file_DelDir(VFI_FolderPath_tmp);
+                        if(waifu2x_STOP==false)emit Send_TextBrowser_NewMessage(tr("Failed to interpolate frames of video:[")+VideoPath+tr("]. Gonna generate a video without frame Interpolation."));
+                    }
+                }
+            }
+        }
     }
     //=============== 音频降噪 ========================
     if((ui->checkBox_AudioDenoise->isChecked())&&QFile::exists(AudioPath))
@@ -770,11 +1101,22 @@ int MainWindow::video_images2video(QString VideoPath,QString video_mp4_scaled_fu
         CMD = "\""+ffmpeg_path+"\" -y -f image2 -framerate "+fps+" -r "+fps+" -i \""+ScaledFrameFolderPath.replace("%","%%")+"/%0"+QString::number(FrameNumDigits,10)+"d.png\" -r "+fps+bitrate_video_cmd+resize_cmd+video_ReadSettings_OutputVid(AudioPath)+" -r "+fps+" \""+video_mp4_scaled_fullpath+"\"";
     }
     QProcess images2video;
+    QFile::remove(video_mp4_scaled_fullpath);//删除旧文件
     images2video.start(CMD);
     while(!images2video.waitForStarted(100)&&!QProcess_stop) {}
-    while(!images2video.waitForFinished(100)&&!QProcess_stop) {}
+    while(!images2video.waitForFinished(100)&&!QProcess_stop)
+    {
+        if(waifu2x_STOP)
+        {
+            images2video.close();
+            QFile::remove(video_mp4_scaled_fullpath);
+            file_DelDir(VFI_FolderPath_tmp);
+            if(Del_DenoisedAudio)QFile::remove(AudioPath);
+            return 0;
+        }
+    }
     //============== 尝试在Win7下可能兼容的指令 ================================
-    if(!QFile::exists(video_mp4_scaled_fullpath))
+    if(QFile::exists(video_mp4_scaled_fullpath)==false)
     {
         if(QFile::exists(AudioPath))
         {
@@ -787,10 +1129,22 @@ int MainWindow::video_images2video(QString VideoPath,QString video_mp4_scaled_fu
         QProcess images2video;
         images2video.start(CMD);
         while(!images2video.waitForStarted(100)&&!QProcess_stop) {}
-        while(!images2video.waitForFinished(100)&&!QProcess_stop) {}
+        while(!images2video.waitForFinished(100)&&!QProcess_stop)
+        {
+            if(waifu2x_STOP)
+            {
+                images2video.close();
+                QFile::remove(video_mp4_scaled_fullpath);
+                file_DelDir(VFI_FolderPath_tmp);
+                if(Del_DenoisedAudio)QFile::remove(AudioPath);
+                return 0;
+            }
+        }
     }
     //===================
     if(Del_DenoisedAudio)QFile::remove(AudioPath);
+    if(ui->checkBox_KeepVideoCache->isChecked() == false || ui->checkBox_ProcessVideoBySegment->isChecked())file_DelDir(VFI_FolderPath_tmp);
+    if(ui->checkBox_KeepVideoCache->isChecked() == false)QFile::remove(isPreVFIDone_MarkFilePath(VideoPath));
     //==============================
     emit Send_TextBrowser_NewMessage(tr("Finish assembling video:[")+VideoPath+"]");
     return 0;
@@ -800,18 +1154,18 @@ QString MainWindow::video_ReadSettings_OutputVid(QString AudioPath)
 {
     QString OutputVideoSettings= " ";
     //====
-    if(ui->checkBox_videoSettings_isEnabled->isChecked())
+    if(ui->groupBox_video_settings->isChecked())
     {
-        if(ui->lineEdit_encoder_vid->text()!="")
+        if(ui->lineEdit_encoder_vid->text().trimmed()!="")
         {
-            OutputVideoSettings.append("-c:v "+ui->lineEdit_encoder_vid->text()+" ");//图像编码器
+            OutputVideoSettings.append("-c:v "+ui->lineEdit_encoder_vid->text().trimmed()+" ");//图像编码器
         }
         //========
         if(QFile::exists(AudioPath))
         {
-            if(ui->lineEdit_encoder_audio->text()!="")
+            if(ui->lineEdit_encoder_audio->text().trimmed()!="")
             {
-                OutputVideoSettings.append("-c:a "+ui->lineEdit_encoder_audio->text()+" ");//音频编码器
+                OutputVideoSettings.append("-c:a "+ui->lineEdit_encoder_audio->text().trimmed()+" ");//音频编码器
             }
             //=========
             if(ui->spinBox_bitrate_audio->value()>0)
@@ -820,16 +1174,16 @@ QString MainWindow::video_ReadSettings_OutputVid(QString AudioPath)
             }
         }
         //=========
-        if(ui->lineEdit_pixformat->text()!="")
+        if(ui->lineEdit_pixformat->text().trimmed()!="")
         {
-            OutputVideoSettings.append("-pix_fmt "+ui->lineEdit_pixformat->text()+" ");//pixel format
+            OutputVideoSettings.append("-pix_fmt "+ui->lineEdit_pixformat->text().trimmed()+" ");//pixel format
         }
         else
         {
             OutputVideoSettings.append("-pix_fmt yuv420p ");//pixel format
         }
         //===========
-        if(ui->lineEdit_ExCommand_output->text()!="")
+        if(ui->lineEdit_ExCommand_output->text().trimmed()!="")
         {
             OutputVideoSettings.append(ui->lineEdit_ExCommand_output->text().trimmed()+" ");//附加指令
         }
@@ -841,4 +1195,13 @@ QString MainWindow::video_ReadSettings_OutputVid(QString AudioPath)
     }
     //=======
     return OutputVideoSettings;
+}
+
+void MainWindow::DelVfiDir(QString VideoPath)
+{
+    QFileInfo vfinfo(VideoPath);
+    QString video_dir = file_getFolderPath(vfinfo);
+    QString video_filename = file_getBaseName(VideoPath);
+    file_DelDir(video_dir+"/"+video_filename+"_PreVFI_W2xEX");
+    file_DelDir(video_dir+"/"+video_filename+"_PostVFI_W2xEX");
 }

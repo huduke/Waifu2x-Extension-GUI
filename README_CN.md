@@ -4,7 +4,8 @@
 
 <h2 align="center"> Waifu2x-Extension-GUI </h2>
 
-<h3 align="center"> 使用机器学习放大 图片/视频/GIF </h3>
+<h3 align="center"> 使用机器学习放大 图片/视频/GIF 以及视频补帧. </h3>
+<h3 align="center"> 支持 AMD / Nvidia / Intel 显卡 </h3>
 
 <p align="center">
 <img src="https://img.shields.io/github/v/release/aaronfeng753/waifu2x-extension-gui?label=Latest%20stable%20release&style=flat-square&color=brightgreen">
@@ -14,7 +15,7 @@
 
 ### [📜English README](https://github.com/AaronFeng753/Waifu2x-Extension-GUI/blob/master/README.md)
 
-#### 如果README内的图片无法正常加载,请[点击本链接查看码云内存储的README](https://gitee.com/aaronfeng0711/Waifu2x-Extension-GUI/blob/master/README_CN.md)或者[使用邮电部国家公用电信网提供的国际出入口信道进行国际联网](http://www.cac.gov.cn/1996-02/02/c_126468621.htm)后刷新页面.
+如果README内的图片无法正常加载,请[点击本链接查看码云内存储的README](https://gitee.com/aaronfeng0711/Waifu2x-Extension-GUI/blob/master/README_CN.md)或者[使用邮电部国家公用电信网提供的国际出入口信道进行国际联网](http://www.cac.gov.cn/1996-02/02/c_126468621.htm)后刷新页面. 码云上的源码并非与Github实时同步, 请以[官方Github为准](https://github.com/AaronFeng753/Waifu2x-Extension-GUI).
 
 # [💾下载最新稳定版本 (Windows x64)](https://github.com/AaronFeng753/Waifu2x-Extension-GUI/releases/latest)
 下载最新版本的绿色版安装包, 适用于拥有`Intel/AMD/Nvidia`显卡的`Windows 64位`系统个人电脑.
@@ -23,7 +24,7 @@
 
 #### [📖点击阅读 使用说明 Wiki](https://github.com/AaronFeng753/Waifu2x-Extension-GUI/wiki/%E4%B8%AD%E6%96%87%E7%9B%AE%E5%BD%95)---[📝点击查看完整更新日志](https://github.com/AaronFeng753/Waifu2x-Extension-GUI/blob/master/Change_log_CN.md)
 
-支持的语言: English, 简体中文, 日本語(機械翻訳), 繁體中文.
+支持的语言: English, 简体中文, 繁體中文.
 
 [➡点击访问Gitee(码云,中国大陆)的Releases下载页面](https://gitee.com/aaronfeng0711/Waifu2x-Extension-GUI/releases)
 
@@ -38,11 +39,12 @@
 
 # Waifu2x-Extension-GUI是什么?
 
-### 借助深度卷积神经网络对`图片` & `GIF` & `视频`进行超分辨率放大(即放大与降噪).
+### 借助深度卷积神经网络对`图片` & `GIF` & `视频`进行`超分辨率`放大(即放大与降噪) 以及 对视频进行 `插帧(即补帧)`.
 
 ### ✨主要特性:
 - #### 📺自动化处理多种媒体: 支持处理 图片 的同时,实现了自动化处理 GIF 和 视频.
 - #### 😍全图像风格支持: 内置多种算法, 无论是 二次元动漫 还是 您日常拍摄的照片&录像 ,都可以进行清晰化处理.
+- #### 🎞视频插帧(补帧): 在对视频进行超分辨率后,自动对视频进行插帧以改进视频流畅度.
 - #### ✅强大的兼容性: 内置多个引擎, 几乎与所有现代 Windows PC 兼容.
 - 📊灵活的多线程设定: 在为每个引擎提供完备的设置项的同时,您也可以自由调整线程数量,充分利用PC的一切性能.
 - 🚀🚀🚀多GPU支持: 内置的所有引擎均可支持多显卡,充分利用您的PC的所有性能.
@@ -52,11 +54,17 @@
 - 📨持续的维护与更新.
 
 ```
-内置图像处理算法:
+内置超分辨率算法:
 Waifu2x / SRMD / RealSR / Anime4K / ACNet
 
-内置图像处理引擎:
+内置超分辨率引擎:
 Waifu2x-caffe / Waifu2x-converter / Waifu2x-ncnn-vulkan / SRMD-ncnn-vulkan / RealSR-ncnn-vulkan / Anime4KCPP
+
+内置插帧算法:
+RIFE / CAIN / DAIN
+
+内置插帧引擎:
+rife-ncnn-vulkan / cain-ncnn-vulkan / dain-ncnn-vulkan
 ```
 
 #### ✅已经在 `AMD` RX 550, `NVIDIA` GeForce GTX 1070 和 `Intel` UHD 620 上通过测试.
@@ -67,13 +75,10 @@ Waifu2x-caffe / Waifu2x-converter / Waifu2x-ncnn-vulkan / SRMD-ncnn-vulkan / Rea
 
 ![Additional_Settings](/Screenshot/Additional_Settings_CN.jpg)
 
-# 示例👀
+# [示例👀](https://github.com/AaronFeng753/Waifu2x-Extension-GUI/tree/master/Samples/)
 
-### **`图片`** : https://github.com/AaronFeng753/Waifu2x-Extension-GUI/tree/master/Samples/image
-
-### **`视频`** : https://github.com/AaronFeng753/Waifu2x-Extension-GUI/tree/master/Samples/video
-
-### **`GIF`** : https://github.com/AaronFeng753/Waifu2x-Extension-GUI/tree/master/Samples/gif
+#### 辛普森一家剧场版预告 (低画质 720p 24fps ➡ 1440p 48fps): https://youtu.be/x-CksDPFGQ8
+#### The Simpsons AVGN Intro (30fps ➡ 60fps): https://youtu.be/yxF-M_ka7ds
 
 ### [➡对比(3D写实)(使用内置的RealSR-NCNN-Vulkan引擎)](https://imgsli.com/MzYzMTQ)
 #### [原照片来自Unsplash,由Jonatan Pie拍摄.](https://unsplash.com/photos/Yv9WbjBgZXY)
@@ -90,13 +95,17 @@ Waifu2x-caffe / Waifu2x-converter / Waifu2x-ncnn-vulkan / SRMD-ncnn-vulkan / Rea
 ![Scaled Imgae](/Samples/image/Waifu2x_8x_[3840x2400].jpg)
 
 #### 原图 GIF 500 x 372 (493 KB):
-![Original GIF](/Samples/gif/2_original.gif)
+![Original GIF](/Samples/gif/GIF_2_original.gif)
 
 #### 经过2x放大,2级降噪和gif优化后 1000 x 744 (3.77 MB):
 #### (使用内置的Waifu2x-NCNN-Vulkan引擎)
-![Original GIF](/Samples/gif/2_waifu2x_compressed.gif)
+![Original GIF](/Samples/gif/GIF_2_waifu2x_compressed.gif)
 
 ### `github不支持在线播放视频, 请点击下方链接查看视频示例:`
+
+#### 辛普森一家剧场版预告 (低画质 720p 24fps ➡ 1440p 48fps): https://youtu.be/x-CksDPFGQ8
+#### The Simpsons AVGN Intro (30fps ➡ 60fps): https://youtu.be/yxF-M_ka7ds
+
 ### **`视频`** : https://github.com/AaronFeng753/Waifu2x-Extension-GUI/tree/master/Samples/video
 
 # ❤ 捐赠 ❤ (推荐使用 支付宝 或者 微信)
@@ -127,14 +136,20 @@ Waifu2x-Extension-GUI遵循[🔗GNU Affero General Public License v3.0](https://
 
 # 💝鸣谢💝:
 - ❤捐赠者们❤
+- 感谢 [@CAFUCSteven](https://github.com/CAFUCSteven) 长期以来帮助我测试软件，并反馈了许多Bug与建议.
 - Anime4K: https://github.com/bloc97/Anime4K
 - Anime4KCPP: https://github.com/TianZerL/Anime4KCPP
 - Beautiful Soup: https://www.crummy.com/software/BeautifulSoup/
+- cain-ncnn-vulkan: https://github.com/nihui/cain-ncnn-vulkan
+- Channel Attention Is All You Need for Video Frame Interpolation: https://github.com/myungsub/CAIN
+- DAIN ncnn Vulkan: https://github.com/nihui/dain-ncnn-vulkan
+- DAIN (Depth-Aware Video Frame Interpolation): https://github.com/baowenbo/DAIN
 - FFmpeg: https://ffmpeg.org/
 - FFmpeg Builds - gyan.dev: https://www.gyan.dev/ffmpeg/builds/
 - FFmpeg Builds - Zeranoe(该网站已停止运营): https://ffmpeg.zeranoe.com/builds/
 - Ghostscript: https://www.ghostscript.com/index.html
 - Gifsicle: https://www.lcdf.org/gifsicle/
+- GNU Wget: https://www.gnu.org/software/wget/
 - ImageMagick: http://www.imagemagick.org/
 - NCNN: https://github.com/Tencent/ncnn
 - NirCmd: https://www.nirsoft.net/utils/nircmd.html
@@ -146,6 +161,8 @@ Waifu2x-Extension-GUI遵循[🔗GNU Affero General Public License v3.0](https://
 - QT: https://www.qt.io/
 - RealSR-ncnn-vulkan: https://github.com/nihui/realsr-ncnn-vulkan
 - Real-World Super-Resolution: https://github.com/jixiaozhong/RealSR
+- rife-ncnn-vulkan: https://github.com/nihui/rife-ncnn-vulkan
+- RIFE Video Frame Interpolation: https://github.com/hzwer/arXiv2020-RIFE
 - SoX: http://sox.sourceforge.net/
 - SRMD: https://github.com/cszn/SRMD
 - SRMD-ncnn-Vulkan: https://github.com/nihui/srmd-ncnn-vulkan
@@ -157,6 +174,5 @@ Waifu2x-Extension-GUI遵循[🔗GNU Affero General Public License v3.0](https://
 - 图标作者: [Freepik](https://www.flaticon.com/authors/freepik) & [Roundicons](https://www.flaticon.com/authors/roundicons) & [Icongeek26](https://www.flaticon.com/authors/Icongeek26) 来自 Flaticon : https://www.flaticon.com/
 - 感謝 [@uimee](https://github.com/AaronFeng753/Waifu2x-Extension-GUI/issues/85) 協助進行繁體中文翻譯.
 - 感谢 [@Nova-Aurora](https://github.com/Nova-Aurora) 协助修复英文版README中的语法和拼写错误.
-- 感谢 [@CAFUCSteven](https://github.com/CAFUCSteven) 协助测试软件.
 - 感谢 [@Michael18751](https://github.com/Michael18751) 为提示音添加了淡出效果.
 - 感谢 [@CaptainStabs](https://github.com/CaptainStabs) 协助修复多个英语语法错误.

@@ -22,6 +22,7 @@
 void MainWindow::on_pushButton_compatibilityTest_clicked()
 {
     ui->tab_Home->setEnabled(0);
+    Start_SystemTrayIcon->setEnabled(0);
     ui->tab_EngineSettings->setEnabled(0);
     ui->tab_VideoSettings->setEnabled(0);
     ui->tab_AdditionalSettings->setEnabled(0);
@@ -54,6 +55,13 @@ int MainWindow::Waifu2x_Compatibility_Test()
         {
             while(!Waifu2x_vulkan->waitForFinished(100)&&!QProcess_stop) {}
         }
+        QString ErrorMSG = Waifu2x_vulkan->readAllStandardError().toLower();
+        QString StanderMSG = Waifu2x_vulkan->readAllStandardOutput().toLower();
+        if(ErrorMSG.contains("failed")||StanderMSG.contains("failed"))
+        {
+            QFile::remove(OutputPath);
+            continue;
+        }
         if(QFile::exists(OutputPath))break;
     }
     if(QFile::exists(OutputPath))
@@ -82,6 +90,13 @@ int MainWindow::Waifu2x_Compatibility_Test()
         if(Waifu2x_vulkan_old->waitForStarted(30000))
         {
             while(!Waifu2x_vulkan_old->waitForFinished(100)&&!QProcess_stop) {}
+        }
+        QString ErrorMSG = Waifu2x_vulkan_old->readAllStandardError().toLower();
+        QString StanderMSG = Waifu2x_vulkan_old->readAllStandardOutput().toLower();
+        if(ErrorMSG.contains("failed")||StanderMSG.contains("failed"))
+        {
+            QFile::remove(OutputPath);
+            continue;
         }
         if(QFile::exists(OutputPath))break;
     }
@@ -112,6 +127,15 @@ int MainWindow::Waifu2x_Compatibility_Test()
         {
             while(!Waifu2x_vulkan_fp16p->waitForFinished(100)&&!QProcess_stop) {}
         }
+        //=========
+        QString ErrorMSG = Waifu2x_vulkan_fp16p->readAllStandardError().toLower();
+        QString StanderMSG = Waifu2x_vulkan_fp16p->readAllStandardOutput().toLower();
+        if(ErrorMSG.contains("failed")||StanderMSG.contains("failed"))
+        {
+            QFile::remove(OutputPath);
+            continue;
+        }
+        //========
         if(QFile::exists(OutputPath))break;
     }
     if(QFile::exists(OutputPath))
@@ -162,7 +186,7 @@ int MainWindow::Waifu2x_Compatibility_Test()
     Current_Path = qApp->applicationDirPath();
     QString Anime4k_folder_path = Current_Path + "/Anime4K";
     program = Anime4k_folder_path + "/Anime4K_waifu2xEX.exe";
-    cmd = "\"" + program + "\" -i \"" + InputPath + "\" -o \"" + OutputPath + "\" -z 2 -M opencl";
+    cmd = "\"" + program + "\" -i \"" + InputPath + "\" -o \"" + OutputPath + "\" -z 2";
     QProcess *Waifu2x_anime4k = new QProcess();
     for(int CompatTest_retry=0; CompatTest_retry<3; CompatTest_retry++)
     {
@@ -190,7 +214,7 @@ int MainWindow::Waifu2x_Compatibility_Test()
     //==========================================
     Current_Path = qApp->applicationDirPath();
     program = Anime4k_folder_path + "/Anime4K_waifu2xEX.exe";
-    cmd = "\"" + program + "\" -i \"" + InputPath + "\" -o \"" + OutputPath + "\" -z 2 -q -M opencl";
+    cmd = "\"" + program + "\" -i \"" + InputPath + "\" -o \"" + OutputPath + "\" -z 2 -q";
     QProcess *Waifu2x_anime4k_gpu = new QProcess();
     for(int CompatTest_retry=0; CompatTest_retry<3; CompatTest_retry++)
     {
@@ -228,6 +252,15 @@ int MainWindow::Waifu2x_Compatibility_Test()
         {
             while(!SRMD_NCNN_VULKAN->waitForFinished(100)&&!QProcess_stop) {}
         }
+        //=========
+        QString ErrorMSG = SRMD_NCNN_VULKAN->readAllStandardError().toLower();
+        QString StanderMSG = SRMD_NCNN_VULKAN->readAllStandardOutput().toLower();
+        if(ErrorMSG.contains("failed")||StanderMSG.contains("failed"))
+        {
+            QFile::remove(OutputPath);
+            continue;
+        }
+        //========
         if(QFile::exists(OutputPath))break;
     }
     if(QFile::exists(OutputPath))
@@ -344,6 +377,15 @@ int MainWindow::Waifu2x_Compatibility_Test()
         {
             while(!realsr_ncnn_vulkan_qprocess->waitForFinished(100)&&!QProcess_stop) {}
         }
+        //=========
+        QString ErrorMSG = realsr_ncnn_vulkan_qprocess->readAllStandardError().toLower();
+        QString StanderMSG = realsr_ncnn_vulkan_qprocess->readAllStandardOutput().toLower();
+        if(ErrorMSG.contains("failed")||StanderMSG.contains("failed"))
+        {
+            QFile::remove(OutputPath);
+            continue;
+        }
+        //========
         if(QFile::exists(OutputPath))break;
     }
     if(QFile::exists(OutputPath))
@@ -357,29 +399,6 @@ int MainWindow::Waifu2x_Compatibility_Test()
         isCompatible_Realsr_NCNN_Vulkan=false;
     }
     QFile::remove(OutputPath);
-    emit Send_Add_progressBar_CompatibilityTest();
-    //==========================================
-    //            Python 扩展
-    //==========================================
-    QString PythonExt_ProgramPath = Current_Path + "/python_ext_waifu2xEX.exe";
-    QString PythonExt_VideoFilePath = Current_Path + "/Compatibility_Test/CompatibilityTest_Video.mp4";
-    QProcess PythonExt_QProcess;
-    PythonExt_QProcess.start("\""+PythonExt_ProgramPath+"\" \""+PythonExt_VideoFilePath+"\" fps");
-    if(PythonExt_QProcess.waitForStarted(30000))
-    {
-        while(!PythonExt_QProcess.waitForFinished(100)&&!QProcess_stop) {}
-    }
-    QString PythonExt_fps=PythonExt_QProcess.readAllStandardOutput().trimmed();
-    if(PythonExt_fps!="0.0")
-    {
-        emit Send_TextBrowser_NewMessage(tr("Compatible with Python extension: Yes."));
-        isCompatible_PythonExtension=true;
-    }
-    else
-    {
-        emit Send_TextBrowser_NewMessage(tr("Compatible with Python extension: No."));
-        isCompatible_PythonExtension=false;
-    }
     emit Send_Add_progressBar_CompatibilityTest();
     //==========================================
     //                  FFmpeg
@@ -435,6 +454,7 @@ int MainWindow::Waifu2x_Compatibility_Test()
     //==========================================
     //                 ImageMagick
     //==========================================
+    //convert
     QString convert_InputPath = Current_Path + "/Compatibility_Test/Compatibility_Test.jpg";
     QString convert_OutputPath = Current_Path + "/Compatibility_Test/convert_res.bmp";
     QString convert_program = Current_Path+"/convert_waifu2xEX.exe";
@@ -445,7 +465,9 @@ int MainWindow::Waifu2x_Compatibility_Test()
     {
         while(!convert_QProcess.waitForFinished(100)&&!QProcess_stop) {}
     }
-    if(QFile::exists(convert_OutputPath))
+    //identify
+    QMap<QString,int> res_map_Compatibility_Test = Image_Gif_Read_Resolution(convert_InputPath);
+    if(QFile::exists(convert_OutputPath)&&res_map_Compatibility_Test["height"]>0&&res_map_Compatibility_Test["width"]>0)
     {
         emit Send_TextBrowser_NewMessage(tr("Compatible with ImageMagick: Yes."));
         isCompatible_ImageMagick=true;
@@ -512,6 +534,129 @@ int MainWindow::Waifu2x_Compatibility_Test()
     }
     QFile::remove(SoX_OutputPath);
     emit Send_Add_progressBar_CompatibilityTest();
+    //==========================================
+    //                 Rife-NCNN-Vulkan
+    //==========================================
+    QProcess *RifeNcnnVulkan_QProcess = new QProcess();
+    QString InputPath_RifeNcnnVulkan_0 = Current_Path + "/Compatibility_Test/Compatibility_Test.jpg";
+    QString InputPath_RifeNcnnVulkan_1 = Current_Path + "/Compatibility_Test/Compatibility_Test_1.jpg";
+    QFile::remove(OutputPath);
+    QString rife_ncnn_vulkan_ProgramPath = Current_Path+"/rife-ncnn-vulkan/rife-ncnn-vulkan_waifu2xEX.exe";
+    cmd = "\"" + rife_ncnn_vulkan_ProgramPath + "\"" + " -0 " + "\"" + InputPath_RifeNcnnVulkan_0 + "\"" + " -1 " + "\"" + InputPath_RifeNcnnVulkan_1 + "\" -o " + "\"" + OutputPath + "\"" + " -j 1:1:1 -m \""+Current_Path+"/rife-ncnn-vulkan/rife-v2.4\"";
+    for(int CompatTest_retry=0; CompatTest_retry<3; CompatTest_retry++)
+    {
+        RifeNcnnVulkan_QProcess->start(cmd);
+        if(RifeNcnnVulkan_QProcess->waitForStarted(30000))
+        {
+            while(!RifeNcnnVulkan_QProcess->waitForFinished(100)&&!QProcess_stop) {}
+        }
+        //=========
+        QString ErrorMSG = RifeNcnnVulkan_QProcess->readAllStandardError().toLower();
+        QString StanderMSG = RifeNcnnVulkan_QProcess->readAllStandardOutput().toLower();
+        if(ErrorMSG.contains("failed")||StanderMSG.contains("failed"))
+        {
+            QFile::remove(OutputPath);
+            continue;
+        }
+        //========
+        if(QFile::exists(OutputPath))break;
+    }
+    if(QFile::exists(OutputPath))
+    {
+        emit Send_TextBrowser_NewMessage(tr("Compatible with Rife-NCNN-Vulkan: Yes."));
+        isCompatible_RifeNcnnVulkan=true;
+    }
+    else
+    {
+        emit Send_TextBrowser_NewMessage(tr("Compatible with Rife-NCNN-Vulkan: No. [Advice: Re-install gpu driver or update it to the latest.]"));
+        isCompatible_RifeNcnnVulkan=false;
+    }
+    QFile::remove(OutputPath);
+    emit Send_Add_progressBar_CompatibilityTest();
+    //==========================================
+    //                 Cain-NCNN-Vulkan
+    //==========================================
+    QProcess *CainNcnnVulkan_QProcess = new QProcess();
+    QFile::remove(OutputPath);
+    QString cain_ncnn_vulkan_ProgramPath = Current_Path+"/cain-ncnn-vulkan/cain-ncnn-vulkan_waifu2xEX.exe";
+    cmd = "\"" + cain_ncnn_vulkan_ProgramPath + "\"" + " -0 " + "\"" + InputPath_RifeNcnnVulkan_0 + "\"" + " -1 " + "\"" + InputPath_RifeNcnnVulkan_1 + "\" -o " + "\"" + OutputPath + "\"" + " -j 1:1:1 -m \""+Current_Path+"/cain-ncnn-vulkan/cain\"";
+    for(int CompatTest_retry=0; CompatTest_retry<3; CompatTest_retry++)
+    {
+        CainNcnnVulkan_QProcess->start(cmd);
+        if(CainNcnnVulkan_QProcess->waitForStarted(30000))
+        {
+            while(!CainNcnnVulkan_QProcess->waitForFinished(100)&&!QProcess_stop) {}
+        }
+        //=========
+        QString ErrorMSG = CainNcnnVulkan_QProcess->readAllStandardError().toLower();
+        QString StanderMSG = CainNcnnVulkan_QProcess->readAllStandardOutput().toLower();
+        if(ErrorMSG.contains("failed")||StanderMSG.contains("failed"))
+        {
+            QFile::remove(OutputPath);
+            continue;
+        }
+        //========
+        if(QFile::exists(OutputPath))break;
+    }
+    if(QFile::exists(OutputPath))
+    {
+        emit Send_TextBrowser_NewMessage(tr("Compatible with Cain-NCNN-Vulkan: Yes."));
+        isCompatible_CainNcnnVulkan=true;
+    }
+    else
+    {
+        emit Send_TextBrowser_NewMessage(tr("Compatible with Cain-NCNN-Vulkan: No. [Advice: Re-install gpu driver or update it to the latest.]"));
+        isCompatible_CainNcnnVulkan=false;
+    }
+    QFile::remove(OutputPath);
+    emit Send_Add_progressBar_CompatibilityTest();
+    //==========================================
+    //                 Dain-NCNN-Vulkan
+    //==========================================
+    QProcess *dainNcnnVulkan_QProcess = new QProcess();
+    QFile::remove(OutputPath);
+    QString dain_ncnn_vulkan_ProgramPath = Current_Path+"/dain-ncnn-vulkan/dain-ncnn-vulkan_waifu2xEX.exe";
+    cmd = "\"" + dain_ncnn_vulkan_ProgramPath + "\"" + " -0 " + "\"" + InputPath_RifeNcnnVulkan_0 + "\"" + " -1 " + "\"" + InputPath_RifeNcnnVulkan_1 + "\" -o " + "\"" + OutputPath + "\"" + " -j 1:1:1 -m \""+Current_Path+"/dain-ncnn-vulkan/best\" -t 128";
+    for(int CompatTest_retry=0; CompatTest_retry<3; CompatTest_retry++)
+    {
+        dainNcnnVulkan_QProcess->start(cmd);
+        if(dainNcnnVulkan_QProcess->waitForStarted(30000))
+        {
+            while(!dainNcnnVulkan_QProcess->waitForFinished(100)&&!QProcess_stop) {}
+        }
+        //=========
+        QString ErrorMSG = dainNcnnVulkan_QProcess->readAllStandardError().toLower();
+        QString StanderMSG = dainNcnnVulkan_QProcess->readAllStandardOutput().toLower();
+        if(ErrorMSG.contains("failed")||StanderMSG.contains("failed"))
+        {
+            QFile::remove(OutputPath);
+            continue;
+        }
+        //========
+        if(QFile::exists(OutputPath))break;
+    }
+    if(QFile::exists(OutputPath))
+    {
+        emit Send_TextBrowser_NewMessage(tr("Compatible with dain-NCNN-Vulkan: Yes."));
+        isCompatible_DainNcnnVulkan=true;
+    }
+    else
+    {
+        emit Send_TextBrowser_NewMessage(tr("Compatible with dain-NCNN-Vulkan: No. [Advice: Re-install gpu driver or update it to the latest.]"));
+        isCompatible_DainNcnnVulkan=false;
+    }
+    QFile::remove(OutputPath);
+    emit Send_Add_progressBar_CompatibilityTest();
+    //=================
+    // 杀死滞留的进程
+    //=================
+    QStringList TaskNameList;
+    TaskNameList << "convert_waifu2xEX.exe"<<"ffmpeg_waifu2xEX.exe"<<"ffprobe_waifu2xEX.exe"<<"identify_waifu2xEX.exe"<<"gifsicle_waifu2xEX.exe"<<"waifu2x-ncnn-vulkan_waifu2xEX.exe"
+                 <<"waifu2x-ncnn-vulkan-fp16p_waifu2xEX.exe"<<"Anime4K_waifu2xEX.exe"<<"waifu2x-caffe_waifu2xEX.exe"<<"srmd-ncnn-vulkan_waifu2xEX.exe"<<"realsr-ncnn-vulkan_waifu2xEX.exe"
+                 <<"waifu2x-converter-cpp_waifu2xEX.exe"<<"sox_waifu2xEX.exe"<<"rife-ncnn-vulkan_waifu2xEX.exe"<<"cain-ncnn-vulkan_waifu2xEX.exe"<<"dain-ncnn-vulkan_waifu2xEX.exe";
+    KILL_TASK_QStringList(TaskNameList,true);
+    //================
+    //测试结束
     //================
     emit Send_TextBrowser_NewMessage(tr("Compatibility test is complete!"));
     emit Send_SystemTray_NewMessage(tr("Compatibility test is complete!"));
@@ -529,7 +674,6 @@ int MainWindow::Waifu2x_Compatibility_Test_finished()
     ui->checkBox_isCompatible_SRMD_NCNN_Vulkan->setChecked(isCompatible_SRMD_NCNN_Vulkan);
     ui->checkBox_isCompatible_Anime4k_CPU->setChecked(isCompatible_Anime4k_CPU);
     ui->checkBox_isCompatible_Anime4k_GPU->setChecked(isCompatible_Anime4k_GPU);
-    ui->checkBox_isCompatible_PythonExtension->setChecked(isCompatible_PythonExtension);
     ui->checkBox_isCompatible_FFmpeg->setChecked(isCompatible_FFmpeg);
     ui->checkBox_isCompatible_FFprobe->setChecked(isCompatible_FFprobe);
     ui->checkBox_isCompatible_ImageMagick->setChecked(isCompatible_ImageMagick);
@@ -539,9 +683,13 @@ int MainWindow::Waifu2x_Compatibility_Test_finished()
     ui->checkBox_isCompatible_Waifu2x_Caffe_GPU->setChecked(isCompatible_Waifu2x_Caffe_GPU);
     ui->checkBox_isCompatible_Waifu2x_Caffe_cuDNN->setChecked(isCompatible_Waifu2x_Caffe_cuDNN);
     ui->checkBox_isCompatible_Realsr_NCNN_Vulkan->setChecked(isCompatible_Realsr_NCNN_Vulkan);
+    ui->checkBox_isCompatible_RifeNcnnVulkan->setChecked(isCompatible_RifeNcnnVulkan);
+    ui->checkBox_isCompatible_CainNcnnVulkan->setChecked(isCompatible_CainNcnnVulkan);
+    ui->checkBox_isCompatible_DainNcnnVulkan->setChecked(isCompatible_DainNcnnVulkan);
     //解除界面管制
     Finish_progressBar_CompatibilityTest();
     ui->tab_Home->setEnabled(1);
+    Start_SystemTrayIcon->setEnabled(1);
     ui->tab_EngineSettings->setEnabled(1);
     ui->tab_VideoSettings->setEnabled(1);
     ui->tab_AdditionalSettings->setEnabled(1);
@@ -552,11 +700,23 @@ int MainWindow::Waifu2x_Compatibility_Test_finished()
     /*
     判断是否有必要部件不兼容,如果有则弹出提示
     */
-    if(isCompatible_PythonExtension==false||isCompatible_FFmpeg==false||isCompatible_FFprobe==false||isCompatible_ImageMagick==false||isCompatible_Gifsicle==false||isCompatible_SoX==false)
+    if(isCompatible_FFmpeg==false||isCompatible_FFprobe==false||isCompatible_ImageMagick==false||isCompatible_Gifsicle==false||isCompatible_SoX==false)
     {
         QMessageBox *MSG = new QMessageBox();
         MSG->setWindowTitle(tr("Notification"));
         MSG->setText(tr("One of the essential plugins is not compatible with your PC, the software may not work normally on your PC.\n\nYou can try to re-install this software, this might solve the problem."));
+        MSG->setIcon(QMessageBox::Warning);
+        MSG->setModal(true);
+        MSG->show();
+    }
+    /*
+    判断插帧引擎是否全部不兼容
+    */
+    if(isCompatible_RifeNcnnVulkan==false && isCompatible_CainNcnnVulkan==false)
+    {
+        QMessageBox *MSG = new QMessageBox();
+        MSG->setWindowTitle(tr("Notification"));
+        MSG->setText(tr("All of the Frame Interpolation engines are not compatible with your PC, so you will not be able to use the Frame Interpolation function."));
         MSG->setIcon(QMessageBox::Warning);
         MSG->setModal(true);
         MSG->show();
@@ -572,6 +732,31 @@ int MainWindow::Waifu2x_Compatibility_Test_finished()
         /*
         * 协助用户调整引擎设定:
         */
+        //插帧引擎
+        if(isCompatible_RifeNcnnVulkan==true || isCompatible_CainNcnnVulkan==true || isCompatible_DainNcnnVulkan==true)
+        {
+            if(isCompatible_RifeNcnnVulkan)
+            {
+                ui->comboBox_Engine_VFI->setCurrentIndex(0);
+                on_comboBox_Engine_VFI_currentIndexChanged(0);
+            }
+            else
+            {
+                if(isCompatible_CainNcnnVulkan)
+                {
+                    ui->comboBox_Engine_VFI->setCurrentIndex(1);
+                    on_comboBox_Engine_VFI_currentIndexChanged(0);
+                }
+                else
+                {
+                    if(isCompatible_DainNcnnVulkan)
+                    {
+                        ui->comboBox_Engine_VFI->setCurrentIndex(2);
+                        on_comboBox_Engine_VFI_currentIndexChanged(0);
+                    }
+                }
+            }
+        }
         //========== 检查waifu2x-ncnn-vulkan 最新版 的兼容性 ===============
         if(isCompatible_Waifu2x_NCNN_Vulkan_NEW==true)
         {
@@ -756,7 +941,7 @@ void MainWindow::Init_progressBar_CompatibilityTest()
 {
     ui->progressBar_CompatibilityTest->setEnabled(1);
     ui->progressBar_CompatibilityTest->setVisible(1);
-    ui->progressBar_CompatibilityTest->setRange(0,17);
+    ui->progressBar_CompatibilityTest->setRange(0,19);
     ui->progressBar_CompatibilityTest->setValue(0);
 }
 //进度+1 -兼容性测试进度条

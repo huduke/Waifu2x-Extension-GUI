@@ -4,7 +4,8 @@
 
 <h2 align="center"> Waifu2x-Extension-GUI </h2>
 
-<h3 align="center"> Photo/Video/GIF enlargement using machine learning </h3>
+<h3 align="center"> Photo/Video/GIF enlargement and Video frame interpolation using machine learning </h3>
+<h3 align="center"> Supports AMD / Nvidia / Intel GPU </h3>
 
 <p align="center">
 <img src="https://img.shields.io/github/v/release/aaronfeng753/waifu2x-extension-gui?label=Latest%20stable%20release&style=flat-square&color=brightgreen">
@@ -21,7 +22,7 @@ Download Latest Build➡: https://github.com/AaronFeng753/Waifu2x-Extension-GUI/
 
 #### [📝Full change log](https://github.com/AaronFeng753/Waifu2x-Extension-GUI/blob/master/Change_log.md)
 
-Supported Languages: English, 简体中文, 日本語(機械翻訳), 繁體中文.
+Supported Languages: English, 简体中文, 繁體中文.
 
 # [🌟Download Beta Build (Windows x64)](https://github.com/AaronFeng753/Waifu2x-Extension-GUI/releases)
 The beta build has a faster update cycle than the stable build, which allows you to experience the latest features of the software in advance.
@@ -32,11 +33,12 @@ Download the beta build at the releases page: https://github.com/AaronFeng753/Wa
 
 # What is Waifu2x-Extension-GUI?
 
-### `Image` & `GIF` & `Video` Super-Resolution using Deep Convolutional Neural Networks.
+### `Image` & `GIF` & `Video` `Super-Resolution` and Video `Frame Interpolation` using Deep Convolutional Neural Networks.
 
 ### ✨Key features:
 - #### 📺Multimedia support: Supports processing Image & GIF & Video at the same time.
 - #### 😍Full image style support: Multiple built-in algorithms, 2D anime, or your daily photos & videos, this software can handle all of them.
+- #### 🎞Video frame interpolation: Automatically use AI to interpolate frames after enlarge the video.
 - #### ✅Great compatibility: Multiple built-in engines, compatible with almost all modern Windows PCs.
 - 📊Flexible multi-thread setting: You can adjust the number of threads freely while providing a complete set of settings for each engine, Take advantage of all the capabilities of your PC.
 - 🚀🚀🚀Multi-GPU support: Multi-GPU support for ALL built-in engines.
@@ -46,11 +48,17 @@ Download the beta build at the releases page: https://github.com/AaronFeng753/Wa
 - 📨Continual maintenance and updates.
 
 ```
-Built-in image processing algorithms:
+Built-in super-resolution algorithms:
 Waifu2x / SRMD / RealSR / Anime4K / ACNet
 
-Built-in image processing engines:
+Built-in super-resolution engines:
 Waifu2x-caffe / Waifu2x-converter / Waifu2x-ncnn-vulkan / SRMD-ncnn-vulkan / RealSR-ncnn-vulkan / Anime4KCPP
+
+Built-in Video frame interpolation algorithms:
+RIFE / CAIN / DAIN
+
+Built-in Video frame interpolation engines:
+rife-ncnn-vulkan / cain-ncnn-vulkan / dain-ncnn-vulkan
 ```
 
 #### ✅Already been tested on the `AMD` RX 550, `NVIDIA` GeForce GTX 1070 and `Intel` UHD 620.
@@ -61,13 +69,10 @@ Waifu2x-caffe / Waifu2x-converter / Waifu2x-ncnn-vulkan / SRMD-ncnn-vulkan / Rea
 
 ![Additional_Settings](/Screenshot/Additional_Settings_EN.jpg)
 
-# Samples👀
+# [Samples👀](https://github.com/AaronFeng753/Waifu2x-Extension-GUI/tree/master/Samples/)
 
-### **`Image`** : https://github.com/AaronFeng753/Waifu2x-Extension-GUI/tree/master/Samples/image
-
-### **`Video`** : https://github.com/AaronFeng753/Waifu2x-Extension-GUI/tree/master/Samples/video
-
-### **`GIF`** : https://github.com/AaronFeng753/Waifu2x-Extension-GUI/tree/master/Samples/gif
+#### The Simpsons Movie Trailer (LOW quality 720p 24fps ➡ 1440p 48fps): https://youtu.be/x-CksDPFGQ8
+#### The Simpsons AVGN Intro (30fps ➡ 60fps): https://youtu.be/yxF-M_ka7ds
 
 ### [➡Comparison(3D Real-life)(Using RealSR-NCNN-Vulkan Engine)](https://imgsli.com/MzYzMTQ)
 #### [Photo by Jonatan Pie on Unsplash](https://unsplash.com/photos/Yv9WbjBgZXY)
@@ -84,13 +89,17 @@ Waifu2x-caffe / Waifu2x-converter / Waifu2x-ncnn-vulkan / SRMD-ncnn-vulkan / Rea
 ![Scaled Imgae](/Samples/image/Waifu2x_8x_[3840x2400].jpg)
 
 #### Original GIF 500 x 372 (493 KB):
-![Original GIF](/Samples/gif/2_original.gif)
+![Original GIF](/Samples/gif/GIF_2_original.gif)
 
 #### After 2x magnification, level 2 denoise and gif optimize 1000 x 744 (3.77 MB):
 #### (Using Waifu2x-NCNN-Vulkan Engine)
-![Original GIF](/Samples/gif/2_waifu2x_compressed.gif)
+![Scaled GIF](/Samples/gif/GIF_2_waifu2x_compressed.gif)
 
 #### `Github doesn't support online video playback, please check link below:`
+
+#### The Simpsons Movie Trailer (LOW quality 720p 24fps ➡ 1440p 48fps): https://youtu.be/x-CksDPFGQ8
+#### The Simpsons AVGN Intro (30fps ➡ 60fps): https://youtu.be/yxF-M_ka7ds
+
 ### **`Video`** : https://github.com/AaronFeng753/Waifu2x-Extension-GUI/tree/master/Samples/video
 
 # ❤ Donate ❤ (推荐使用 支付宝 或者 微信)
@@ -122,14 +131,20 @@ In conclusion, we won't collect any data from you. If you don't trust us, you ca
 
 # 💝Credits💝:
 - ❤All donors❤
+- Special thanks to [@CAFUCSteven](https://github.com/CAFUCSteven) for helping me test the software, report multiple bugs and give me multiple suggestions.
 - Anime4K: https://github.com/bloc97/Anime4K
 - Anime4KCPP: https://github.com/TianZerL/Anime4KCPP
 - Beautiful Soup: https://www.crummy.com/software/BeautifulSoup/
+- cain-ncnn-vulkan: https://github.com/nihui/cain-ncnn-vulkan
+- Channel Attention Is All You Need for Video Frame Interpolation: https://github.com/myungsub/CAIN
+- DAIN ncnn Vulkan: https://github.com/nihui/dain-ncnn-vulkan
+- DAIN (Depth-Aware Video Frame Interpolation): https://github.com/baowenbo/DAIN
 - FFmpeg: https://ffmpeg.org/
 - FFmpeg Builds - gyan.dev: https://www.gyan.dev/ffmpeg/builds/
 - FFmpeg Builds - Zeranoe (This website has ceased operations): https://ffmpeg.zeranoe.com/builds/
 - Ghostscript: https://www.ghostscript.com/index.html
 - Gifsicle: https://www.lcdf.org/gifsicle/
+- GNU Wget: https://www.gnu.org/software/wget/
 - ImageMagick: http://www.imagemagick.org/
 - NCNN: https://github.com/Tencent/ncnn
 - NirCmd: https://www.nirsoft.net/utils/nircmd.html
@@ -141,6 +156,8 @@ In conclusion, we won't collect any data from you. If you don't trust us, you ca
 - QT: https://www.qt.io/
 - RealSR-ncnn-vulkan: https://github.com/nihui/realsr-ncnn-vulkan
 - Real-World Super-Resolution: https://github.com/jixiaozhong/RealSR
+- rife-ncnn-vulkan: https://github.com/nihui/rife-ncnn-vulkan
+- RIFE Video Frame Interpolation: https://github.com/hzwer/arXiv2020-RIFE
 - SoX: http://sox.sourceforge.net/
 - SRMD: https://github.com/cszn/SRMD
 - SRMD-ncnn-Vulkan: https://github.com/nihui/srmd-ncnn-vulkan
@@ -152,6 +169,5 @@ In conclusion, we won't collect any data from you. If you don't trust us, you ca
 - Icons made by : [Freepik](https://www.flaticon.com/authors/freepik) & [Roundicons](https://www.flaticon.com/authors/roundicons) & [Icongeek26](https://www.flaticon.com/authors/Icongeek26) From Flaticon : https://www.flaticon.com/
 - Thanks to [@uimee](https://github.com/AaronFeng753/Waifu2x-Extension-GUI/issues/85) for 繁體中文 translation.
 - Thanks to [@Nova-Aurora](https://github.com/Nova-Aurora) for fixing several errors in the English README.
-- Thanks to [@CAFUCSteven](https://github.com/CAFUCSteven) for assistance in testing the software.
 - Thanks to [@Michael18751](https://github.com/Michael18751) for adding a fadeout effect to the notification sound.
 - Thanks to [@CaptainStabs](https://github.com/CaptainStabs) for fixing several English grammar errors.

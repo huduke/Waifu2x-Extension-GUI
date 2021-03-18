@@ -32,7 +32,7 @@ void MainWindow::on_pushButton_CheckUpdate_clicked()
 }
 /*
 自动检查更新:
-启动软件时以单独线程运行,调用python扩展检测更新,如有则弹窗
+启动软件时以单独线程运行,检测更新,如有则弹窗
 */
 int MainWindow::CheckUpadte_Auto()
 {
@@ -61,9 +61,6 @@ int MainWindow::CheckUpadte_Auto()
     //============================
     QString Github_UpdateInfo_local = Current_Path+"/Update_Info_Github.ini";
     QString Gitee_UpdateInfo_local = Current_Path+"/Update_Info_Gitee.ini";
-    //=
-    QFile::remove(Github_UpdateInfo_local);
-    QFile::remove(Gitee_UpdateInfo_local);
     //============= 从Github下载更新信息 ==============
     emit Send_TextBrowser_NewMessage(tr("Starting to download update information(for auto-check update) from Github."));
     DownloadTo(Github_UpdateInfo_online,Github_UpdateInfo_local);

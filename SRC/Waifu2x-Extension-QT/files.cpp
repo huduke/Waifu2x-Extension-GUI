@@ -45,14 +45,13 @@ void MainWindow::dropEvent(QDropEvent *event)
     ui->groupBox_Setting->setEnabled(0);
     ui->groupBox_FileList->setEnabled(0);
     ui->groupBox_InputExt->setEnabled(0);
-    ui->pushButton_Start->setEnabled(0);
+    pushButton_Start_setEnabled_self(0);
     ui->checkBox_ScanSubFolders->setEnabled(0);
     this->setAcceptDrops(0);
     ui->label_DropFile->setText(tr("Adding files, please wait."));
     emit Send_TextBrowser_NewMessage(tr("Adding files, please wait."));
     //===================================================
     QtConcurrent::run(this, &MainWindow::Read_urls, urls);
-    //=============
 }
 /*
 读取urls
@@ -62,19 +61,24 @@ void MainWindow::Read_urls(QList<QUrl> urls)
     Progressbar_MaxVal = urls.size();
     Progressbar_CurrentVal = 0;
     emit Send_PrograssBar_Range_min_max(0, Progressbar_MaxVal);
-    foreach(QUrl url, urls)
+    if(ui->checkBox_ScanSubFolders->isChecked())
     {
-        if(ui->checkBox_ScanSubFolders->isChecked())
+        foreach(QUrl url, urls)
         {
             Add_File_Folder_IncludeSubFolder(url.toLocalFile());
+            emit Send_progressbar_Add();
         }
-        else
+    }
+    else
+    {
+        foreach(QUrl url, urls)
         {
             Add_File_Folder(url.toLocalFile());
+            emit Send_progressbar_Add();
         }
-        emit Send_progressbar_Add();
     }
     emit Send_Read_urls_finfished();
+    return;
 }
 /*
 读取urls
@@ -87,7 +91,7 @@ void MainWindow::Read_urls_finfished()
     //===
     ui->groupBox_Setting->setEnabled(1);
     ui->groupBox_FileList->setEnabled(1);
-    ui->pushButton_Start->setEnabled(1);
+    pushButton_Start_setEnabled_self(1);
     ui->groupBox_InputExt->setEnabled(1);
     ui->checkBox_ScanSubFolders->setEnabled(1);
     this->setAcceptDrops(1);
@@ -113,23 +117,18 @@ void MainWindow::Read_urls_finfished()
     {
         ui->label_DropFile->setVisible(0);//隐藏文件投放label
         ui->tableView_image->setVisible(1);
-        ui->pushButton_ClearList->setVisible(1);
-        ui->pushButton_RemoveItem->setVisible(1);
     }
     if(AddNew_gif)
     {
         ui->label_DropFile->setVisible(0);//隐藏文件投放label
         ui->tableView_gif->setVisible(1);
-        ui->pushButton_ClearList->setVisible(1);
-        ui->pushButton_RemoveItem->setVisible(1);
     }
     if(AddNew_video)
     {
         ui->label_DropFile->setVisible(0);//隐藏文件投放label
         ui->tableView_video->setVisible(1);
-        ui->pushButton_ClearList->setVisible(1);
-        ui->pushButton_RemoveItem->setVisible(1);
     }
+    //===================
     ui->tableView_gif->scrollToBottom();
     ui->tableView_image->scrollToBottom();
     ui->tableView_video->scrollToBottom();
@@ -139,9 +138,11 @@ void MainWindow::Read_urls_finfished()
     gif_ScrBar->setValue(0);
     QScrollBar *video_ScrBar = ui->tableView_video->horizontalScrollBar();
     video_ScrBar->setValue(0);
+    //==========
     AddNew_image=false;
     AddNew_gif=false;
     AddNew_video=false;
+    //============
     Table_FileCount_reload();
 }
 
@@ -163,9 +164,10 @@ void MainWindow::Add_File_Folder(QString Full_Path)
         QString Full_Path_File = "";
         if(!FileNameList.isEmpty())
         {
+            QString tmp="";
             for(int i = 0; i < FileNameList.size(); i++)
             {
-                QString tmp = FileNameList.at(i);
+                tmp = FileNameList.at(i);
                 Full_Path_File = Full_Path + "/" + tmp;
                 FileList_Add(tmp, Full_Path_File);
             }
@@ -190,20 +192,20 @@ void MainWindow::Add_File_Folder_IncludeSubFolder(QString Full_Path)
         QString Full_Path_File = "";
         if(!FileNameList.isEmpty())
         {
+            QString tmp="";
             for(int i = 0; i < FileNameList.size(); i++)
             {
-                QString tmp = FileNameList.at(i);
+                tmp = FileNameList.at(i);
                 Full_Path_File = Full_Path + "/" + tmp;
                 QFileInfo fileinfo_tmp(Full_Path_File);
                 if(fileinfo_tmp.isFile())
                 {
-                    if(QFile::exists(Full_Path_File))
-                        FileList_Add(tmp, Full_Path_File);
+                    if(QFile::exists(Full_Path_File))FileList_Add(tmp, Full_Path_File);
                 }
                 else
                 {
-                    if(QFile::exists(Full_Path_File))
-                        Add_File_Folder_IncludeSubFolder(Full_Path_File);
+                    //if(QFile::exists(Full_Path_File))
+                    if(file_isDirExist(Full_Path_File))Add_File_Folder_IncludeSubFolder(Full_Path_File);
                 }
             }
         }
@@ -266,12 +268,12 @@ QStringList MainWindow::file_getFileNames_in_Folder_nofilter(QString path)
 int MainWindow::FileList_Add(QString fileName, QString SourceFile_fullPath)
 {
     QFileInfo fileinfo(SourceFile_fullPath);
-    QString file_ext = fileinfo.suffix();
+    QString file_ext = fileinfo.suffix().toLower();
     //============================  判断是否为图片 ===============================
-    QString Ext_image_str = ui->Ext_image->text();
+    QString Ext_image_str = ui->Ext_image->text().toLower();
     QStringList nameFilters_image = Ext_image_str.split(":");
     nameFilters_image.removeAll("gif");
-    if (nameFilters_image.contains(file_ext.toLower()))
+    if (nameFilters_image.contains(file_ext))
     {
         AddNew_image=true;
         int rowNum = Table_image_get_rowNum();
@@ -292,19 +294,21 @@ int MainWindow::FileList_Add(QString fileName, QString SourceFile_fullPath)
         return 0;
     }
     //============================  判断是否为视频 ===============================
-    QString Ext_video_str = ui->Ext_video->text();
+    QString Ext_video_str = ui->Ext_video->text().toLower();
     QStringList nameFilters_video = Ext_video_str.split(":");
     nameFilters_video.removeAll("gif");
-    if (nameFilters_video.contains(file_ext.toLower()))
+    if (nameFilters_video.contains(file_ext))
     {
-        if(file_ext!="mp4"&&file_ext.toLower()=="mp4")
+        /*
+        file_ext = fileinfo.suffix();
+        if(file_ext!="mp4" && file_ext.toLower()=="mp4")
         {
             QString file_name = file_getBaseName(SourceFile_fullPath);
-            QString file_ext = fileinfo.suffix();
             QString file_path = file_getFolderPath(fileinfo);
             QFile::rename(file_path+"/"+file_name+"."+file_ext,file_path+"/"+file_name+".mp4");
             SourceFile_fullPath = file_path+"/"+file_name+".mp4";
         }
+        */
         AddNew_video=true;
         int rowNum = Table_video_get_rowNum();
         QMap<QString, QString> map;
@@ -324,7 +328,7 @@ int MainWindow::FileList_Add(QString fileName, QString SourceFile_fullPath)
         return 0;
     }
     //============================  最后只能是gif ===============================
-    if(file_ext.toLower()=="gif")
+    if(file_ext=="gif")
     {
         int rowNum = Table_gif_get_rowNum();
         QMap<QString, QString> map;
@@ -572,8 +576,7 @@ bool MainWindow::file_isFilesFolderWritable_row_video(int rowNum)
     else
     {
         emit Send_TextBrowser_NewMessage(tr("Error occured when processing [")+SourceFile_fullPath+tr("]. Error: [Insufficient permissions, administrator permissions is needed.]"));
-        QString status = "Failed";
-        emit Send_Table_video_ChangeStatus_rowNumInt_statusQString(rowNum, status);
+        emit Send_Table_video_ChangeStatus_rowNumInt_statusQString(rowNum, "Failed");
         return false;
     }
 }
@@ -604,7 +607,7 @@ bool MainWindow::file_OpenFile(QString FilePath)
     {
         if(QDesktopServices::openUrl(QUrl("file:"+QUrl::toPercentEncoding(FilePath),QUrl::TolerantMode))==false)
         {
-            ExecuteCMD_batFile("start \"\" \""+FilePath.replace("%","%%")+"\"");
+            ExecuteCMD_batFile("start \"\" \""+FilePath.replace("%","%%")+"\"",false);
         }
         return true;
     }
@@ -613,3 +616,24 @@ bool MainWindow::file_OpenFile(QString FilePath)
         return false;
     }
 }
+
+bool MainWindow::file_generateMarkFile(QString FileFullPath,QString Msg)
+{
+    QFile file(FileFullPath);
+    file.remove();
+    if (file.open(QIODevice::ReadWrite | QIODevice::Text)) //QIODevice::ReadWrite支持读写
+    {
+        QTextStream stream(&file);
+        if(Msg.trimmed() == "")
+        {
+            stream << "Waifu2x-Extension-GUI\nDo NOT delete this file!!";
+        }
+        else
+        {
+            stream << Msg;
+        }
+    }
+    return file.exists();
+}
+
+

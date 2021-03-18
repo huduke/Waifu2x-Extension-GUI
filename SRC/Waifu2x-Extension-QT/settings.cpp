@@ -103,6 +103,9 @@ int MainWindow::Settings_Save()
     configIniWrite->setValue("/settings/ImageEXT", ui->Ext_image->text());
     configIniWrite->setValue("/settings/VideoEXT", ui->Ext_video->text());
     //=================== 存储 杂项设置 =================================
+    configIniWrite->setValue("/settings/checkBox_SummaryPopup", ui->checkBox_SummaryPopup->isChecked());
+    configIniWrite->setValue("/settings/checkBox_DisableResize_gif", ui->checkBox_DisableResize_gif->isChecked());
+    configIniWrite->setValue("/settings/checkBox_AutoSkip_CustomRes", ui->checkBox_AutoSkip_CustomRes->isChecked());
     configIniWrite->setValue("/settings/checkBox_AlwaysPreProcessAlphaPNG", ui->checkBox_AlwaysPreProcessAlphaPNG->isChecked());
     configIniWrite->setValue("/settings/spinBox_ImageQualityLevel", ui->spinBox_ImageQualityLevel->value());
     configIniWrite->setValue("/settings/comboBox_ImageSaveFormat", ui->comboBox_ImageSaveFormat->currentIndex());
@@ -112,7 +115,6 @@ int MainWindow::Settings_Save()
     configIniWrite->setValue("/settings/checkBox_MinimizeToTaskbar", ui->checkBox_MinimizeToTaskbar->isChecked());
     configIniWrite->setValue("/settings/checkBox_custres_isAll", ui->checkBox_custres_isAll->isChecked());
     configIniWrite->setValue("/settings/DelOriginal", ui->checkBox_DelOriginal->isChecked());
-    configIniWrite->setValue("/settings/Move2RecycleBin", ui->checkBox_Move2RecycleBin->isChecked());
     configIniWrite->setValue("/settings/OptGIF", ui->checkBox_OptGIF->isChecked());
     configIniWrite->setValue("/settings/NFSound", ui->checkBox_NfSound->isChecked());
     configIniWrite->setValue("/settings/ReProFinFiles", ui->checkBox_ReProcFinFiles->isChecked());
@@ -130,7 +132,9 @@ int MainWindow::Settings_Save()
     configIniWrite->setValue("/settings/KeepVideoCache", ui->checkBox_KeepVideoCache->isChecked());
     configIniWrite->setValue("/settings/checkBox_ReplaceOriginalFile", ui->checkBox_ReplaceOriginalFile->isChecked());
     //===
-    configIniWrite->setValue("/settings/checkQAction_MoveToRecycleBin", checkQAction_MoveToRecycleBin->isChecked());
+    configIniWrite->setValue("/settings/QAction_checkBox_MoveToRecycleBin_checkBox_ReplaceOriginalFile", QAction_checkBox_MoveToRecycleBin_checkBox_ReplaceOriginalFile->isChecked());
+    //===
+    configIniWrite->setValue("/settings/QAction_checkBox_MoveToRecycleBin_checkBox_DelOriginal", QAction_checkBox_MoveToRecycleBin_checkBox_DelOriginal->isChecked());
     //===
     configIniWrite->setValue("/settings/ProcessVideoBySegment", ui->checkBox_ProcessVideoBySegment->isChecked());
     configIniWrite->setValue("/settings/SegmentDuration", ui->spinBox_SegmentDuration->value());
@@ -148,7 +152,7 @@ int MainWindow::Settings_Save()
     configIniWrite->setValue("/settings/CustFont", ui->fontComboBox_CustFont->currentFont());
     configIniWrite->setValue("/settings/CustFont_isEnabled", ui->checkBox_isCustFontEnable->isChecked());
     //=================== 存储视频设置 ===========================
-    configIniWrite->setValue("/settings/VideoSettingsIsEnabled", ui->checkBox_videoSettings_isEnabled->isChecked());
+    configIniWrite->setValue("/settings/VideoSettingsIsEnabled", ui->groupBox_video_settings->isChecked());
     configIniWrite->setValue("/settings/EncoderVideo", ui->lineEdit_encoder_vid->text());
     configIniWrite->setValue("/settings/EncoderAudio", ui->lineEdit_encoder_audio->text());
     configIniWrite->setValue("/settings/PixelFormat", ui->lineEdit_pixformat->text());
@@ -167,6 +171,9 @@ int MainWindow::Settings_Save()
     configIniWrite->setValue("/settings/checkBox_OutPath_KeepOriginalFileName", ui->checkBox_OutPath_KeepOriginalFileName->isChecked());
     configIniWrite->setValue("/settings/checkBox_OutPath_Overwrite", ui->checkBox_OutPath_Overwrite->isChecked());
     //=================== 存储Anime4k设置 =============================
+    configIniWrite->setValue("/settings/spinBox_OpenCLCommandQueues_A4k", ui->spinBox_OpenCLCommandQueues_A4k->value());
+    configIniWrite->setValue("/settings/checkBox_OpenCLParallelIO_A4k", ui->checkBox_OpenCLParallelIO_A4k->isChecked());
+    configIniWrite->setValue("/settings/comboBox_GPGPUModel_A4k", ui->comboBox_GPGPUModel_A4k->currentIndex());
     configIniWrite->setValue("/settings/checkBox_HDNMode_Anime4k", ui->checkBox_HDNMode_Anime4k->isChecked());
     configIniWrite->setValue("/settings/checkBox_FastMode_Anime4K", ui->checkBox_FastMode_Anime4K->isChecked());
     configIniWrite->setValue("/settings/checkBox_ACNet_Anime4K", ui->checkBox_ACNet_Anime4K->isChecked());
@@ -203,7 +210,6 @@ int MainWindow::Settings_Save()
     configIniWrite->setValue("/settings/checkBox_isCompatible_SRMD_NCNN_Vulkan", ui->checkBox_isCompatible_SRMD_NCNN_Vulkan->isChecked());
     configIniWrite->setValue("/settings/checkBox_isCompatible_Anime4k_CPU", ui->checkBox_isCompatible_Anime4k_CPU->isChecked());
     configIniWrite->setValue("/settings/checkBox_isCompatible_Anime4k_GPU", ui->checkBox_isCompatible_Anime4k_GPU->isChecked());
-    configIniWrite->setValue("/settings/checkBox_isCompatible_PythonExtension", ui->checkBox_isCompatible_PythonExtension->isChecked());
     configIniWrite->setValue("/settings/checkBox_isCompatible_FFmpeg", ui->checkBox_isCompatible_FFmpeg->isChecked());
     configIniWrite->setValue("/settings/checkBox_isCompatible_FFprobe", ui->checkBox_isCompatible_FFprobe->isChecked());
     configIniWrite->setValue("/settings/checkBox_isCompatible_ImageMagick", ui->checkBox_isCompatible_ImageMagick->isChecked());
@@ -213,6 +219,26 @@ int MainWindow::Settings_Save()
     configIniWrite->setValue("/settings/checkBox_isCompatible_Waifu2x_Caffe_GPU", ui->checkBox_isCompatible_Waifu2x_Caffe_GPU->isChecked());
     configIniWrite->setValue("/settings/checkBox_isCompatible_Waifu2x_Caffe_cuDNN", ui->checkBox_isCompatible_Waifu2x_Caffe_cuDNN->isChecked());
     configIniWrite->setValue("/settings/checkBox_isCompatible_Realsr_NCNN_Vulkan", ui->checkBox_isCompatible_Realsr_NCNN_Vulkan->isChecked());
+    configIniWrite->setValue("/settings/checkBox_isCompatible_RifeNcnnVulkan", ui->checkBox_isCompatible_RifeNcnnVulkan->isChecked());
+    configIniWrite->setValue("/settings/checkBox_isCompatible_CainNcnnVulkan", ui->checkBox_isCompatible_CainNcnnVulkan->isChecked());
+    configIniWrite->setValue("/settings/checkBox_isCompatible_DainNcnnVulkan", ui->checkBox_isCompatible_DainNcnnVulkan->isChecked());
+    //======================== 存储VFI 设定 ========================
+    configIniWrite->setValue("/settings/checkBox_VfiAfterScale_VFI", ui->checkBox_VfiAfterScale_VFI->isChecked());
+    configIniWrite->setValue("/settings/checkBox_MultiThread_VFI", ui->checkBox_MultiThread_VFI->isChecked());
+    configIniWrite->setValue("/settings/checkBox_AutoAdjustNumOfThreads_VFI", ui->checkBox_AutoAdjustNumOfThreads_VFI->isChecked());
+    configIniWrite->setValue("/settings/checkBox_FrameInterpolationOnly_Video", ui->checkBox_FrameInterpolationOnly_Video->isChecked());
+    configIniWrite->setValue("/settings/groupBox_FrameInterpolation", ui->groupBox_FrameInterpolation->isChecked());
+    configIniWrite->setValue("/settings/checkBox_MultiGPU_VFI", ui->checkBox_MultiGPU_VFI->isChecked());
+    configIniWrite->setValue("/settings/checkBox_TTA_VFI", ui->checkBox_TTA_VFI->isChecked());
+    configIniWrite->setValue("/settings/checkBox_UHD_VFI", ui->checkBox_UHD_VFI->isChecked());
+    configIniWrite->setValue("/settings/comboBox_Model_VFI", ui->comboBox_Model_VFI->currentIndex());
+    configIniWrite->setValue("/settings/comboBox_GPUID_VFI", ui->comboBox_GPUID_VFI->currentIndex());
+    configIniWrite->setValue("/settings/Available_GPUID_FrameInterpolation", Available_GPUID_FrameInterpolation);
+    configIniWrite->setValue("/settings/lineEdit_MultiGPU_IDs_VFI", ui->lineEdit_MultiGPU_IDs_VFI->text());
+    configIniWrite->setValue("/settings/spinBox_NumOfThreads_VFI", ui->spinBox_NumOfThreads_VFI->value());
+    configIniWrite->setValue("/settings/comboBox_Engine_VFI", ui->comboBox_Engine_VFI->currentIndex());
+    configIniWrite->setValue("/settings/spinBox_MultipleOfFPS_VFI", ui->spinBox_MultipleOfFPS_VFI->value());
+    configIniWrite->setValue("/settings/spinBox_TileSize_VFI", ui->spinBox_TileSize_VFI->value());
     //========
     return 0;
 }
@@ -225,7 +251,8 @@ int MainWindow::Settings_Read_Apply()
     QString settings_ini = Current_Path+"/settings.ini";
     if(!QFile::exists(settings_ini))
     {
-        checkQAction_MoveToRecycleBin->setChecked(1);
+        QAction_checkBox_MoveToRecycleBin_checkBox_ReplaceOriginalFile->setChecked(1);
+        QAction_checkBox_MoveToRecycleBin_checkBox_DelOriginal->setChecked(1);
         if(isBetaVer)comboBox_UpdateChannel_setCurrentIndex_self(1);
         Settings_Save();
         Settings_Read_Apply();
@@ -354,6 +381,9 @@ int MainWindow::Settings_Read_Apply()
     ui->Ext_image->setText(Settings_Read_value("/settings/ImageEXT").toString());
     ui->Ext_video->setText(Settings_Read_value("/settings/VideoEXT").toString());
     //================== 加载 杂项设置 ==================================
+    ui->checkBox_SummaryPopup->setChecked(Settings_Read_value("/settings/checkBox_SummaryPopup").toBool());
+    ui->checkBox_DisableResize_gif->setChecked(Settings_Read_value("/settings/checkBox_DisableResize_gif").toBool());
+    ui->checkBox_AutoSkip_CustomRes->setChecked(Settings_Read_value("/settings/checkBox_AutoSkip_CustomRes").toBool());
     ui->checkBox_AlwaysPreProcessAlphaPNG->setChecked(Settings_Read_value("/settings/checkBox_AlwaysPreProcessAlphaPNG").toBool());
     ui->spinBox_ImageQualityLevel->setValue(Settings_Read_value("/settings/spinBox_ImageQualityLevel").toInt());
     ui->comboBox_ImageSaveFormat->setCurrentIndex(Settings_Read_value("/settings/comboBox_ImageSaveFormat").toInt());
@@ -363,7 +393,6 @@ int MainWindow::Settings_Read_Apply()
     ui->checkBox_MinimizeToTaskbar->setChecked(Settings_Read_value("/settings/checkBox_MinimizeToTaskbar").toBool());
     ui->checkBox_custres_isAll->setChecked(Settings_Read_value("/settings/checkBox_custres_isAll").toBool());
     ui->checkBox_DelOriginal->setChecked(Settings_Read_value("/settings/DelOriginal").toBool());
-    ui->checkBox_Move2RecycleBin->setChecked(Settings_Read_value("/settings/Move2RecycleBin").toBool());
     ui->checkBox_OptGIF->setChecked(Settings_Read_value("/settings/OptGIF").toBool());
     ui->checkBox_NfSound->setChecked(Settings_Read_value("/settings/NFSound").toBool());
     ui->checkBox_ReProcFinFiles->setChecked(Settings_Read_value("/settings/ReProFinFiles").toBool());
@@ -380,7 +409,8 @@ int MainWindow::Settings_Read_Apply()
     ui->checkBox_PromptWhenExit->setChecked(Settings_Read_value("/settings/PromptWhenExit").toBool());
     ui->checkBox_KeepVideoCache->setChecked(Settings_Read_value("/settings/KeepVideoCache").toBool());
     ui->checkBox_ReplaceOriginalFile->setChecked(Settings_Read_value("/settings/checkBox_ReplaceOriginalFile").toBool());
-    checkQAction_MoveToRecycleBin->setChecked(Settings_Read_value("/settings/checkQAction_MoveToRecycleBin").toBool());
+    QAction_checkBox_MoveToRecycleBin_checkBox_ReplaceOriginalFile->setChecked(Settings_Read_value("/settings/QAction_checkBox_MoveToRecycleBin_checkBox_ReplaceOriginalFile").toBool());
+    QAction_checkBox_MoveToRecycleBin_checkBox_DelOriginal->setChecked(Settings_Read_value("/settings/QAction_checkBox_MoveToRecycleBin_checkBox_DelOriginal").toBool());
     //===
     ui->checkBox_ProcessVideoBySegment->setChecked(Settings_Read_value("/settings/ProcessVideoBySegment").toBool());
     ui->spinBox_SegmentDuration->setValue(Settings_Read_value("/settings/SegmentDuration").toInt());
@@ -392,7 +422,7 @@ int MainWindow::Settings_Read_Apply()
     //=================== 加载 textbrowser 设置 ==========================
     ui->spinBox_textbrowser_fontsize->setValue(Settings_Read_value("/settings/TextBrowserFontSize").toInt());
     //=================== 加载视频设置 ===========================
-    ui->checkBox_videoSettings_isEnabled->setChecked(Settings_Read_value("/settings/VideoSettingsIsEnabled").toBool());
+    ui->groupBox_video_settings->setChecked(Settings_Read_value("/settings/VideoSettingsIsEnabled").toBool());
     //===
     ui->lineEdit_encoder_vid->setText(Settings_Read_value("/settings/EncoderVideo").toString());
     ui->lineEdit_encoder_audio->setText(Settings_Read_value("/settings/EncoderAudio").toString());
@@ -412,6 +442,9 @@ int MainWindow::Settings_Read_Apply()
     ui->checkBox_OutPath_KeepOriginalFileName->setChecked(Settings_Read_value("/settings/checkBox_OutPath_KeepOriginalFileName").toBool());
     ui->checkBox_OutPath_Overwrite->setChecked(Settings_Read_value("/settings/checkBox_OutPath_Overwrite").toBool());
     //================== 加载Anime4k设置 ===================================
+    ui->spinBox_OpenCLCommandQueues_A4k->setValue(Settings_Read_value("/settings/spinBox_OpenCLCommandQueues_A4k").toInt());
+    ui->checkBox_OpenCLParallelIO_A4k->setChecked(Settings_Read_value("/settings/checkBox_OpenCLParallelIO_A4k").toBool());
+    ui->comboBox_GPGPUModel_A4k->setCurrentIndex(Settings_Read_value("/settings/comboBox_GPGPUModel_A4k").toInt());
     ui->checkBox_HDNMode_Anime4k->setChecked(Settings_Read_value("/settings/checkBox_HDNMode_Anime4k").toBool());
     ui->checkBox_FastMode_Anime4K->setChecked(Settings_Read_value("/settings/checkBox_FastMode_Anime4K").toBool());
     ui->checkBox_ACNet_Anime4K->setChecked(Settings_Read_value("/settings/checkBox_ACNet_Anime4K").toBool());
@@ -448,7 +481,6 @@ int MainWindow::Settings_Read_Apply()
     isCompatible_SRMD_NCNN_Vulkan = Settings_Read_value("/settings/checkBox_isCompatible_SRMD_NCNN_Vulkan").toBool();
     isCompatible_Anime4k_CPU = Settings_Read_value("/settings/checkBox_isCompatible_Anime4k_CPU").toBool();
     isCompatible_Anime4k_GPU = Settings_Read_value("/settings/checkBox_isCompatible_Anime4k_GPU").toBool();
-    isCompatible_PythonExtension = Settings_Read_value("/settings/checkBox_isCompatible_PythonExtension").toBool();
     isCompatible_FFmpeg = Settings_Read_value("/settings/checkBox_isCompatible_FFmpeg").toBool();
     isCompatible_FFprobe = Settings_Read_value("/settings/checkBox_isCompatible_FFprobe").toBool();
     isCompatible_ImageMagick = Settings_Read_value("/settings/checkBox_isCompatible_ImageMagick").toBool();
@@ -458,6 +490,9 @@ int MainWindow::Settings_Read_Apply()
     isCompatible_Waifu2x_Caffe_GPU = Settings_Read_value("/settings/checkBox_isCompatible_Waifu2x_Caffe_GPU").toBool();
     isCompatible_Waifu2x_Caffe_cuDNN = Settings_Read_value("/settings/checkBox_isCompatible_Waifu2x_Caffe_cuDNN").toBool();
     isCompatible_Realsr_NCNN_Vulkan = Settings_Read_value("/settings/checkBox_isCompatible_Realsr_NCNN_Vulkan").toBool();
+    isCompatible_RifeNcnnVulkan = Settings_Read_value("/settings/checkBox_isCompatible_RifeNcnnVulkan").toBool();
+    isCompatible_CainNcnnVulkan = Settings_Read_value("/settings/checkBox_isCompatible_CainNcnnVulkan").toBool();
+    isCompatible_DainNcnnVulkan = Settings_Read_value("/settings/checkBox_isCompatible_DainNcnnVulkan").toBool();
     //===
     ui->checkBox_isCompatible_Waifu2x_NCNN_Vulkan_NEW->setChecked(isCompatible_Waifu2x_NCNN_Vulkan_NEW);
     ui->checkBox_isCompatible_Waifu2x_NCNN_Vulkan_NEW_FP16P->setChecked(isCompatible_Waifu2x_NCNN_Vulkan_NEW_FP16P);
@@ -466,7 +501,6 @@ int MainWindow::Settings_Read_Apply()
     ui->checkBox_isCompatible_SRMD_NCNN_Vulkan->setChecked(isCompatible_SRMD_NCNN_Vulkan);
     ui->checkBox_isCompatible_Anime4k_CPU->setChecked(isCompatible_Anime4k_CPU);
     ui->checkBox_isCompatible_Anime4k_GPU->setChecked(isCompatible_Anime4k_GPU);
-    ui->checkBox_isCompatible_PythonExtension->setChecked(isCompatible_PythonExtension);
     ui->checkBox_isCompatible_FFmpeg->setChecked(isCompatible_FFmpeg);
     ui->checkBox_isCompatible_FFprobe->setChecked(isCompatible_FFprobe);
     ui->checkBox_isCompatible_ImageMagick->setChecked(isCompatible_ImageMagick);
@@ -476,10 +510,34 @@ int MainWindow::Settings_Read_Apply()
     ui->checkBox_isCompatible_Waifu2x_Caffe_GPU->setChecked(isCompatible_Waifu2x_Caffe_GPU);
     ui->checkBox_isCompatible_Waifu2x_Caffe_cuDNN->setChecked(isCompatible_Waifu2x_Caffe_cuDNN);
     ui->checkBox_isCompatible_Realsr_NCNN_Vulkan->setChecked(isCompatible_Realsr_NCNN_Vulkan);
+    ui->checkBox_isCompatible_RifeNcnnVulkan->setChecked(isCompatible_RifeNcnnVulkan);
+    ui->checkBox_isCompatible_CainNcnnVulkan->setChecked(isCompatible_CainNcnnVulkan);
+    ui->checkBox_isCompatible_DainNcnnVulkan->setChecked(isCompatible_DainNcnnVulkan);
+    //======================== 加载 VFI 设定 ========================
+    ui->checkBox_VfiAfterScale_VFI->setChecked(Settings_Read_value("/settings/checkBox_VfiAfterScale_VFI").toBool());
+    ui->checkBox_MultiThread_VFI->setChecked(Settings_Read_value("/settings/checkBox_MultiThread_VFI").toBool());
+    ui->checkBox_AutoAdjustNumOfThreads_VFI->setChecked(Settings_Read_value("/settings/checkBox_AutoAdjustNumOfThreads_VFI").toBool());
+    ui->checkBox_FrameInterpolationOnly_Video->setChecked(Settings_Read_value("/settings/checkBox_FrameInterpolationOnly_Video").toBool());
+    ui->groupBox_FrameInterpolation->setChecked(Settings_Read_value("/settings/groupBox_FrameInterpolation").toBool());
+    ui->checkBox_MultiGPU_VFI->setChecked(Settings_Read_value("/settings/checkBox_MultiGPU_VFI").toBool());
+    ui->checkBox_TTA_VFI->setChecked(Settings_Read_value("/settings/checkBox_TTA_VFI").toBool());
+    ui->checkBox_UHD_VFI->setChecked(Settings_Read_value("/settings/checkBox_UHD_VFI").toBool());
+    ui->comboBox_Model_VFI->setCurrentIndex(Settings_Read_value("/settings/comboBox_Model_VFI").toInt());
+    Available_GPUID_FrameInterpolation = Settings_Read_value("/settings/Available_GPUID_FrameInterpolation").toStringList();
+    FrameInterpolation_DetectGPU_finished();
+    ui->comboBox_GPUID_VFI->setCurrentIndex(Settings_Read_value("/settings/comboBox_GPUID_VFI").toInt());
+    ui->lineEdit_MultiGPU_IDs_VFI->setText(Settings_Read_value("/settings/lineEdit_MultiGPU_IDs_VFI").toString());
+    ui->spinBox_NumOfThreads_VFI->setValue(Settings_Read_value("/settings/spinBox_NumOfThreads_VFI").toInt());
+    Old_FrameInterpolation_Engine_Index = Settings_Read_value("/settings/comboBox_Engine_VFI").toInt();
+    ui->comboBox_Engine_VFI->setCurrentIndex(Old_FrameInterpolation_Engine_Index);
+    ui->spinBox_MultipleOfFPS_VFI->setValue(Settings_Read_value("/settings/spinBox_MultipleOfFPS_VFI").toInt());
+    ui->spinBox_TileSize_VFI->setValue(Settings_Read_value("/settings/spinBox_TileSize_VFI").toInt());
     //==================== 加载语言设置 =====================
     ui->comboBox_language->setCurrentIndex(Settings_Read_value("/settings/Language").toInt());
     on_comboBox_language_currentIndexChanged(0);
     //====================================================
+    on_groupBox_FrameInterpolation_clicked();
+    on_groupBox_video_settings_clicked();
     on_checkBox_AlwaysHideSettings_stateChanged(0);
     on_checkBox_AlwaysHideTextBrowser_stateChanged(0);
     on_checkBox_DelOriginal_stateChanged(0);
@@ -512,7 +570,7 @@ int MainWindow::Settings_Read_Apply()
     //====
     on_checkBox_acodec_copy_2mp4_stateChanged(1);
     on_checkBox_vcodec_copy_2mp4_stateChanged(1);
-    on_checkBox_videoSettings_isEnabled_stateChanged(1);
+    on_checkBox_MultiThread_VFI_stateChanged(1);
     //==================================
     isReadOldSettings=false;
     QFile::remove(Current_Path+"/settings_old.ini");
