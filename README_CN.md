@@ -4,13 +4,17 @@
 
 <h2 align="center"> Waifu2x-Extension-GUI </h2>
 
-<h3 align="center"> 使用机器学习放大 图片/视频/GIF 以及视频补帧. </h3>
+<h3 align="center"> 使用机器学习放大 图片/视频/GIF 以及 视频插帧(补帧). </h3>
 <h3 align="center"> 支持 AMD / Nvidia / Intel 显卡 </h3>
 
 <p align="center">
 <img src="https://img.shields.io/github/v/release/aaronfeng753/waifu2x-extension-gui?label=Latest%20stable%20release&style=flat-square&color=brightgreen">
 <img src="https://img.shields.io/badge/Support-Windows%20x64-blue?logo=Windows&style=flat-square">
 <img src="https://img.shields.io/github/license/aaronfeng753/waifu2x-extension-gui?style=flat-square&label=License">
+</p>
+
+<p align="left">
+<a href="https://www.patreon.com/aaronfeng"><img src="https://github.com/AaronFeng753/Waifu2x-Extension-GUI/blob/master/.github/BecomePatron.jpg?raw=true" alt="Patreon donate button" height="40"/> </a>
 </p>
 
 ### [📜English README](https://github.com/AaronFeng753/Waifu2x-Extension-GUI/blob/master/README.md)
@@ -21,6 +25,9 @@
 下载最新版本的绿色版安装包, 适用于拥有`Intel/AMD/Nvidia`显卡的`Windows 64位`系统个人电脑.
 
 下载最新版: https://github.com/AaronFeng753/Waifu2x-Extension-GUI/releases/latest
+
+#### ➡加入Patreon以获取✨Patreon支持者独享版本✨: https://patreon.com/aaronfeng
+#### ➡在 itch.io 购买 Waifu2x-Extension-GUI: https://aaronfeng.itch.io/waifu2x-extension-gui
 
 #### [📖点击阅读 使用说明 Wiki](https://github.com/AaronFeng753/Waifu2x-Extension-GUI/wiki/%E4%B8%AD%E6%96%87%E7%9B%AE%E5%BD%95)---[📝点击查看完整更新日志](https://github.com/AaronFeng753/Waifu2x-Extension-GUI/blob/master/Change_log_CN.md)
 
@@ -77,9 +84,6 @@ rife-ncnn-vulkan / cain-ncnn-vulkan / dain-ncnn-vulkan
 
 # [示例👀](https://github.com/AaronFeng753/Waifu2x-Extension-GUI/tree/master/Samples/)
 
-#### 辛普森一家剧场版预告 (低画质 720p 24fps ➡ 1440p 48fps): https://youtu.be/x-CksDPFGQ8
-#### The Simpsons AVGN Intro (30fps ➡ 60fps): https://youtu.be/yxF-M_ka7ds
-
 ### [➡对比(3D写实)(使用内置的RealSR-NCNN-Vulkan引擎)](https://imgsli.com/MzYzMTQ)
 #### [原照片来自Unsplash,由Jonatan Pie拍摄.](https://unsplash.com/photos/Yv9WbjBgZXY)
 ![Comparison](/Samples/image/Comparison_3D_Real-life.png)
@@ -109,6 +113,11 @@ rife-ncnn-vulkan / cain-ncnn-vulkan / dain-ncnn-vulkan
 ### **`视频`** : https://github.com/AaronFeng753/Waifu2x-Extension-GUI/tree/master/Samples/video
 
 # ❤ 捐赠 ❤ (推荐使用 支付宝 或者 微信)
+
+<p align="left">
+<a href="https://www.patreon.com/aaronfeng"><img src="https://github.com/AaronFeng753/Waifu2x-Extension-GUI/blob/master/.github/BecomePatron.jpg?raw=true" alt="Patreon donate button" height="35"/> </a>
+</p>
+
 # [PayPal](https://www.paypal.me/aaronfeng753)
 ### 除了扫码捐赠现金, 您也可以每天打开支付宝首页搜“682796694”领红包并使用, 我也可以获得收入.
 ![donate_new](/donate_new.jpg)

@@ -23,7 +23,6 @@
 int MainWindow::Waifu2x_Caffe_Image(int rowNum,bool ReProcess_MissingAlphaChannel)
 {
     //============================= 读取设置 ================================
-    int ScaleRatio = ui->spinBox_ScaleRatio_image->value();
     int DenoiseLevel = ui->spinBox_DenoiseLevel_image->value();
     bool DelOriginal = (ui->checkBox_DelOriginal->isChecked()||ui->checkBox_ReplaceOriginalFile->isChecked());
     QString OutPutPath_Final ="";
@@ -44,6 +43,7 @@ int MainWindow::Waifu2x_Caffe_Image(int rowNum,bool ReProcess_MissingAlphaChanne
     QString SourceFile_fullPath_Original = SourceFile_fullPath;
     SourceFile_fullPath = Imgae_PreProcess(SourceFile_fullPath_Original,ReProcess_MissingAlphaChannel);
     //=======================================================
+    int ScaleRatio = 2;
     bool CustRes_isEnabled = false;
     int CustRes_height=0;
     int CustRes_width=0;
@@ -51,7 +51,7 @@ int MainWindow::Waifu2x_Caffe_Image(int rowNum,bool ReProcess_MissingAlphaChanne
     {
         CustRes_isEnabled=true;
         QMap<QString, QString> Res_map = CustRes_getResMap(SourceFile_fullPath_Original);//res_map["fullpath"],["height"],["width"]
-        ScaleRatio = CustRes_CalNewScaleRatio(SourceFile_fullPath_Original,Res_map["height"].toInt(),Res_map["width"].toInt());
+        ScaleRatio = CustRes_CalNewScaleRatio(SourceFile_fullPath,Res_map["height"].toInt(),Res_map["width"].toInt());
         if(ScaleRatio==0)
         {
             emit Send_TextBrowser_NewMessage(tr("Error occured when processing [")+SourceFile_fullPath_Original+tr("]. Error: [The resolution of the source file cannot be read, so the image cannot be scaled to a custom resolution.]"));
@@ -64,6 +64,34 @@ int MainWindow::Waifu2x_Caffe_Image(int rowNum,bool ReProcess_MissingAlphaChanne
         }
         CustRes_height=Res_map["height"].toInt();
         CustRes_width=Res_map["width"].toInt();
+    }
+    else
+    {
+        double ScaleRatio_double_tmp = ui->doubleSpinBox_ScaleRatio_image->value();
+        if(ScaleRatio_double_tmp == (int)ScaleRatio_double_tmp)
+        {
+            ScaleRatio = qRound(ScaleRatio_double_tmp);
+        }
+        else
+        {
+            CustRes_isEnabled=true;
+            QMap<QString, QString> Res_map = DoubleScaleRatio_Cal_NewScaleRatio_NewHW(SourceFile_fullPath,ScaleRatio_double_tmp);
+            //====
+            if(Res_map.isEmpty())
+            {
+                emit Send_TextBrowser_NewMessage(tr("Error occured when processing [")+SourceFile_fullPath+tr("]. Error: [Unable to read the resolution of the source file.]"));
+                emit Send_Table_image_ChangeStatus_rowNumInt_statusQString(rowNum, "Failed");
+                emit Send_progressbar_Add();
+                mutex_ThreadNumRunning.lock();
+                ThreadNumRunning--;
+                mutex_ThreadNumRunning.unlock();//线程数量统计-1
+                return 0;
+            }
+            //====
+            ScaleRatio = Res_map["ScaleRatio"].toInt();
+            CustRes_height = Res_map["Height_new"].toInt();
+            CustRes_width = Res_map["width_new"].toInt();
+        }
     }
     //=======================================================
     QFileInfo fileinfo(SourceFile_fullPath);
@@ -230,7 +258,7 @@ int MainWindow::Waifu2x_Caffe_Image(int rowNum,bool ReProcess_MissingAlphaChanne
 int MainWindow::Waifu2x_Caffe_GIF(int rowNum)
 {
     //============================= 读取设置 ================================
-    int ScaleRatio = ui->spinBox_ScaleRatio_gif->value();
+    int ScaleRatio = ui->doubleSpinBox_ScaleRatio_gif->value();
     int DenoiseLevel = ui->spinBox_DenoiseLevel_gif->value();
     bool DelOriginal = (ui->checkBox_DelOriginal->isChecked()||ui->checkBox_ReplaceOriginalFile->isChecked());
     bool OptGIF = ui->checkBox_OptGIF->isChecked();
@@ -355,7 +383,7 @@ int MainWindow::Waifu2x_Caffe_GIF(int rowNum)
     }
     else
     {
-        Sub_Thread_info["ScaleRatio"] = QString("%1").arg(ui->spinBox_ScaleRatio_gif->value());
+        Sub_Thread_info["ScaleRatio"] = QString("%1").arg(ui->doubleSpinBox_ScaleRatio_gif->value());
     }
     //=========================
     for(int i = 0; i < GPU_SplitFramesFolderPath_List.size(); i++)
@@ -573,7 +601,7 @@ int MainWindow::Waifu2x_Caffe_GIF_scale(QMap<QString, QString> Sub_Thread_info,i
 int MainWindow::Waifu2x_Caffe_Video(int rowNum)
 {
     //============================= 读取设置 ================================
-    int ScaleRatio = ui->spinBox_ScaleRatio_video->value();
+    int ScaleRatio = ui->doubleSpinBox_ScaleRatio_video->value();
     int DenoiseLevel = ui->spinBox_DenoiseLevel_video->value();
     bool DelOriginal = (ui->checkBox_DelOriginal->isChecked()||ui->checkBox_ReplaceOriginalFile->isChecked());
     bool isCacheExists = false;
@@ -941,7 +969,7 @@ int MainWindow::Waifu2x_Caffe_Video(int rowNum)
 int MainWindow::Waifu2x_Caffe_Video_BySegment(int rowNum)
 {
     //============================= 读取设置 ================================
-    int ScaleRatio = ui->spinBox_ScaleRatio_video->value();
+    int ScaleRatio = ui->doubleSpinBox_ScaleRatio_video->value();
     int DenoiseLevel = ui->spinBox_DenoiseLevel_video->value();
     bool DelOriginal = (ui->checkBox_DelOriginal->isChecked()||ui->checkBox_ReplaceOriginalFile->isChecked());
     bool isCacheExists = false;

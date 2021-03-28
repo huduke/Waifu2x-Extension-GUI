@@ -78,10 +78,10 @@ public:
     MainWindow(QWidget *parent = nullptr);
     void changeEvent(QEvent *e);
     //=======================
-    QString VERSION = "v3.21.13";//软件版本号
-    bool isBetaVer = false;
+    QString VERSION = "v3.22.04-beta";//软件版本号
+    bool isBetaVer = true;
     QString LastStableVer = "v3.21.13";
-    QString LastBetaVer = "v3.21.13";
+    QString LastBetaVer = "v3.22.04-beta";
     //=======================
     QTranslator * translator;//界面翻译
     //=======
@@ -356,12 +356,16 @@ public:
     //=============================== textbrowser===============================
     void TextBrowser_StartMes();//输出启动信息
     //================================ gif ====================================
+    void Gif_RemoveFromCustResList(int RowNumber);
+    bool Gif_DoubleScaleRatioPrep(int RowNumber);
     int Gif_getDuration(QString gifPath);//获取帧间隔时长
     int Gif_getFrameDigits(QString gifPath);//获取帧数量的位数
     void Gif_splitGif(QString gifPath,QString SplitFramesFolderPath);//拆分gif
     void Gif_assembleGif(QString ResGifPath,QString ScaledFramesPath,int Duration,bool CustRes_isEnabled,int CustRes_height,int CustRes_width,bool isOverScaled,QString SourceGifFullPath);//组装gif
     QString Gif_compressGif(QString gifPath,QString gifPath_compressd);//压缩gif
     //================================= video ===============================
+    void video_RemoveFromCustResList(int RowNumber);
+    bool video_DoubleScaleRatioPrep(int RowNumber);
     QString isPreVFIDone_MarkFilePath(QString VideoPath);
     int CalNumDigits(int input_num);
     bool isSuccessiveFailuresDetected_VFI=false;
@@ -416,6 +420,7 @@ public:
     int CustRes_CalNewScaleRatio(QString fullpath,int Height_new,int width_new);//计算新的放大倍数
     int CustRes_SetCustRes();//设定自定义分辨率
     int CustRes_CancelCustRes();//取消自定义分辨率
+    QMap<QString, QString> DoubleScaleRatio_Cal_NewScaleRatio_NewHW(QString fullpath,double ScaleRatio_double);
 
     Qt::AspectRatioMode CustRes_AspectRatioMode = Qt::IgnoreAspectRatio;//自定义分辨率的纵横比策略
     //======================== 设置 ===========================================
@@ -978,6 +983,8 @@ private slots:
     void on_pushButton_MultipleOfFPS_VFI_MIN_clicked();
 
     void on_pushButton_MultipleOfFPS_VFI_ADD_clicked();
+
+    void on_pushButton_Patreon_clicked();
 
 signals:
     void Send_Table_EnableSorting(bool EnableSorting);

@@ -34,44 +34,23 @@ int main(int argc, char *argv[])
 /*
 Change log:
 
-v3.21.13:
-- Complete multi-language translation.
-- Fix bug: Turn off screen button doesn't work.
-- Fix bug: compatibility test progress bar not working normally.
+***补全翻译***
 
-v3.21.02-beta:
-- New Feature: [Multiple of FPS] adjustment is now available for all video frame interpolation engines.
-- Improve GUI.
-- Fix bug: Potential video cache conflict.
-- Fix bug: Unable to generate a video when multiple of fps is higher then 2.
+v3.22.04-beta:
+- Complete Chinese translation.
 
-v3.21.01-beta:
-- New Frame Interpolation engine: DAIN-NCNN-Vulkan.
-- New Feature: Multiple of frames.(Only available when using DAIN-NCNN-Vulkan.)
-- Improve GUI.
-- Fix bug: Unable to generate a video when frame interpolation failed.
-
-v3.11.33-beta:
-- New Feature: Now you can choose when you wanna interpolate the frames, before or after upscaled the frames.(Thanks to @CAFUCSteven for suggestion)
-- New options: [Start], [Pause] and [Donate] for system tray menu.
-- Add icons for system tray menu.
-- Fix bug: The [Background mode] in system tray menu didn't work when frame interpolation is enabled.
-- Fix bug: Video cache will be abandoned when frame interpolation setting is changed, even though [Process video by segment] is disabled.
-- Fix bug: False error report when pause.
-
-v3.11.32-beta:
-- New options: [About] and [Send feedback] for system tray menu.
-- Better naming for cache files.
+v3.22.03-beta:
+- Add a Patreon button. https://www.patreon.com/aaronfeng
 - Optimize performance.
-- Update FFmpeg&FFprobe,ImageMagick.
-- Fix typo.
+- Fix bug: Video will be skipped even though [Frame Interpolation only(Video)] is enabled.
 
-v3.11.31-beta:
-- New Feature: Show summary after processing all files.
-- New Feature: Now you can save multiple files lists.
-- No longer need to fix the suffix of mp4 files.
+v3.22.02-beta:
 - Optimize performance.
-- Remove 日本語 translation.
+- More detailed tool tips.
+- Update FFmpeg&FFprobe.
+
+v3.22.01-beta:
+- New Feature: Non-integer scale ratio support.
 
 --------------------------------------------------------------------------
 To do:
@@ -87,7 +66,7 @@ Integrated component:
 - RealSR-NCNN-Vulkan 20210210
 - ImageMagick 7.0.11-3-portable-Q16-x64
 - Anime4KCPP v2.5.0
-- FFmpeg&FFprobe 2021-03-09-git-c35e456f54
+- FFmpeg&FFprobe 2021-03-24-git-a77beea6c8-full_build
 - NirCmd v2.86
 - Ghostscript 9.53.3
 - GNU Wget 1.20.3

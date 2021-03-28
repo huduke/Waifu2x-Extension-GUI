@@ -124,6 +124,9 @@ height:35
         <bool>false</bool>
        </property>
        <widget class="QWidget" name="tab_Donate">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
         <attribute name="icon">
          <iconset resource="icon.qrc">
           <normaloff>:/new/prefix1/icon/donateTabIcon_1.png</normaloff>:/new/prefix1/icon/donateTabIcon_1.png</iconset>
@@ -144,76 +147,6 @@ height:35
          <property name="bottomMargin">
           <number>5</number>
          </property>
-         <item row="0" column="0">
-          <widget class="QLabel" name="label_DonateText">
-           <property name="maximumSize">
-            <size>
-             <width>16777215</width>
-             <height>22</height>
-            </size>
-           </property>
-           <property name="font">
-            <font>
-             <pointsize>10</pointsize>
-             <weight>50</weight>
-             <bold>false</bold>
-             <underline>false</underline>
-             <strikeout>false</strikeout>
-            </font>
-           </property>
-           <property name="text">
-            <string>Please donate to support the developers, so we can bring further updates for this software, thank you! (｡･∀･)ﾉﾞ</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="0">
-          <widget class="QLabel" name="label_DonateQRCode">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="minimumSize">
-            <size>
-             <width>750</width>
-             <height>360</height>
-            </size>
-           </property>
-           <property name="sizeIncrement">
-            <size>
-             <width>2</width>
-             <height>1</height>
-            </size>
-           </property>
-           <property name="font">
-            <font>
-             <family>Arial</family>
-             <pointsize>13</pointsize>
-             <weight>75</weight>
-             <bold>true</bold>
-            </font>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">image: url(:/new/prefix1/donate/Donate_QRCode.jpg);</string>
-           </property>
-           <property name="frameShape">
-            <enum>QFrame::NoFrame</enum>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-           <property name="scaledContents">
-            <bool>false</bool>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
-           </property>
-          </widget>
-         </item>
          <item row="1" column="0">
           <widget class="QPushButton" name="pushButton_PayPal">
            <property name="minimumSize">
@@ -266,7 +199,7 @@ padding:10px;
 }</string>
            </property>
            <property name="text">
-            <string notr="true">PayPal</string>
+            <string notr="true"> PayPal</string>
            </property>
            <property name="icon">
             <iconset resource="icon.qrc">
@@ -277,6 +210,139 @@ padding:10px;
              <width>38</width>
              <height>38</height>
             </size>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QPushButton" name="pushButton_Patreon">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>60</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>20</pointsize>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+           <property name="toolTip">
+            <string>Become a patron.</string>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QPushButton{
+background-color: rgb(255, 66, 77);
+color: rgb(255, 255, 255);
+border-style:outset;
+border-radius:8px;
+padding:10px;
+}
+QPushButton:hover{
+background-color: rgb(255, 105, 112);
+color: rgb(255, 255, 255);
+border-style:outset;
+border-radius:8px;
+padding:10px;
+}
+QPushButton:pressed{
+background-color: rgb(223, 50, 61);
+color: rgb(255, 255, 255);
+border-style:outset;
+border-radius:8px;
+padding:10px;
+}
+QPushButton:disabled{
+background-color: rgb(166, 166, 166);
+color: rgb(255, 255, 255);
+border-style:outset;
+border-radius:8px;
+padding:10px;
+}</string>
+           </property>
+           <property name="text">
+            <string notr="true"> Patreon</string>
+           </property>
+           <property name="icon">
+            <iconset resource="icon.qrc">
+             <normaloff>:/new/prefix1/icon/patreon.png</normaloff>:/new/prefix1/icon/patreon.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>38</width>
+             <height>38</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0" colspan="2">
+          <widget class="QLabel" name="label_DonateQRCode">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>750</width>
+             <height>360</height>
+            </size>
+           </property>
+           <property name="sizeIncrement">
+            <size>
+             <width>2</width>
+             <height>1</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <family>Arial</family>
+             <pointsize>13</pointsize>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">image: url(:/new/prefix1/donate/Donate_QRCode.jpg);</string>
+           </property>
+           <property name="frameShape">
+            <enum>QFrame::NoFrame</enum>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="scaledContents">
+            <bool>false</bool>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0" colspan="2">
+          <widget class="QLabel" name="label_DonateText">
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>50</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+             <weight>50</weight>
+             <bold>false</bold>
+             <underline>false</underline>
+             <strikeout>false</strikeout>
+            </font>
+           </property>
+           <property name="text">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;Please donate to support the developers, so we can bring further updates for this software, thank you! (｡･∀･)ﾉﾞ &lt;/p&gt;&lt;p align=&quot;center&quot;&gt;If you don't wanna see the Donate page anymore, you can join the Patreon to access the Exclusive Patreon Version.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
            </property>
           </widget>
          </item>
@@ -2509,6 +2575,7 @@ You can modify the settings of Frame Interpolation in the
                    <widget class="QCheckBox" name="checkBox_EnableVFI_Home">
                     <property name="toolTip">
                      <string>Interpolate frames after super-resolution of the video.
+(Increase the frame rate to the result video.)
 
 You can modify the settings of Frame Interpolation
 in the [Video settings] tab.
@@ -2777,36 +2844,18 @@ file that exists in the output path.</string>
                      </widget>
                     </item>
                     <item>
-                     <widget class="QSpinBox" name="spinBox_ScaleRatio_video">
-                      <property name="cursor">
-                       <cursorShape>ArrowCursor</cursorShape>
-                      </property>
-                      <property name="focusPolicy">
-                       <enum>Qt::WheelFocus</enum>
-                      </property>
-                      <property name="toolTip">
-                       <string>Range: 1 ~ 999999999
-
-!Warning! When the [Scale ratio] is too large,
-it might cause the software to crash.</string>
+                     <widget class="QDoubleSpinBox" name="doubleSpinBox_ScaleRatio_video">
+                      <property name="decimals">
+                       <number>4</number>
                       </property>
                       <property name="minimum">
-                       <number>1</number>
+                       <double>1.000000000000000</double>
                       </property>
                       <property name="maximum">
-                       <number>999999999</number>
-                      </property>
-                      <property name="singleStep">
-                       <number>1</number>
-                      </property>
-                      <property name="stepType">
-                       <enum>QAbstractSpinBox::DefaultStepType</enum>
+                       <double>99999.000000000000000</double>
                       </property>
                       <property name="value">
-                       <number>2</number>
-                      </property>
-                      <property name="displayIntegerBase">
-                       <number>10</number>
+                       <double>2.000000000000000</double>
                       </property>
                      </widget>
                     </item>
@@ -2880,36 +2929,18 @@ it might cause the software to crash.</string>
                      </widget>
                     </item>
                     <item>
-                     <widget class="QSpinBox" name="spinBox_ScaleRatio_gif">
-                      <property name="cursor">
-                       <cursorShape>ArrowCursor</cursorShape>
-                      </property>
-                      <property name="focusPolicy">
-                       <enum>Qt::WheelFocus</enum>
-                      </property>
-                      <property name="toolTip">
-                       <string>Range: 1 ~ 999999999
-
-!Warning! When the [Scale ratio] is too large,
-it might cause the software to crash.</string>
+                     <widget class="QDoubleSpinBox" name="doubleSpinBox_ScaleRatio_gif">
+                      <property name="decimals">
+                       <number>4</number>
                       </property>
                       <property name="minimum">
-                       <number>1</number>
+                       <double>1.000000000000000</double>
                       </property>
                       <property name="maximum">
-                       <number>999999999</number>
-                      </property>
-                      <property name="singleStep">
-                       <number>1</number>
-                      </property>
-                      <property name="stepType">
-                       <enum>QAbstractSpinBox::DefaultStepType</enum>
+                       <double>99999.000000000000000</double>
                       </property>
                       <property name="value">
-                       <number>2</number>
-                      </property>
-                      <property name="displayIntegerBase">
-                       <number>10</number>
+                       <double>2.000000000000000</double>
                       </property>
                      </widget>
                     </item>
@@ -3083,36 +3114,18 @@ then the result video will be 120 fps.</string>
                      </widget>
                     </item>
                     <item>
-                     <widget class="QSpinBox" name="spinBox_ScaleRatio_image">
-                      <property name="cursor">
-                       <cursorShape>ArrowCursor</cursorShape>
-                      </property>
-                      <property name="focusPolicy">
-                       <enum>Qt::WheelFocus</enum>
-                      </property>
-                      <property name="toolTip">
-                       <string>Range: 1 ~ 999999999
-
-!Warning! When the [Scale ratio] is too large,
-it might cause the software to crash.</string>
+                     <widget class="QDoubleSpinBox" name="doubleSpinBox_ScaleRatio_image">
+                      <property name="decimals">
+                       <number>4</number>
                       </property>
                       <property name="minimum">
-                       <number>1</number>
+                       <double>1.000000000000000</double>
                       </property>
                       <property name="maximum">
-                       <number>999999999</number>
-                      </property>
-                      <property name="singleStep">
-                       <number>1</number>
-                      </property>
-                      <property name="stepType">
-                       <enum>QAbstractSpinBox::DefaultStepType</enum>
+                       <double>99999.000000000000000</double>
                       </property>
                       <property name="value">
-                       <number>2</number>
-                      </property>
-                      <property name="displayIntegerBase">
-                       <number>10</number>
+                       <double>2.000000000000000</double>
                       </property>
                      </widget>
                     </item>
@@ -8044,7 +8057,11 @@ Only works when using [dain-ncnn-vulkan] engine.</string>
                    <item>
                     <widget class="QComboBox" name="comboBox_Model_VFI">
                      <property name="toolTip">
-                      <string>Only works when using [rife-ncnn-vulkan] engine.</string>
+                      <string>Choose the model for rife-ncnn-vulkan engine.
+
+We recommend you to use the default model &quot;rife-v2.4&quot;.
+
+Only works when using [rife-ncnn-vulkan] engine.</string>
                      </property>
                      <property name="currentIndex">
                       <number>5</number>

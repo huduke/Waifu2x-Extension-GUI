@@ -54,13 +54,37 @@ int MainWindow::Waifu2x_NCNN_Vulkan_Image(int rowNum,bool ReProcess_MissingAlpha
     {
         CustRes_isEnabled=true;
         QMap<QString, QString> Res_map = CustRes_getResMap(SourceFile_fullPath_Original);//res_map["fullpath"],["height"],["width"]
-        ScaleRatio = CustRes_CalNewScaleRatio(SourceFile_fullPath_Original,Res_map["height"].toInt(),Res_map["width"].toInt());
+        ScaleRatio = CustRes_CalNewScaleRatio(SourceFile_fullPath,Res_map["height"].toInt(),Res_map["width"].toInt());
         CustRes_height=Res_map["height"].toInt();
         CustRes_width=Res_map["width"].toInt();
     }
     else
     {
-        ScaleRatio = ui->spinBox_ScaleRatio_image->value();
+        double ScaleRatio_double_tmp = ui->doubleSpinBox_ScaleRatio_image->value();
+        if(ScaleRatio_double_tmp == (int)ScaleRatio_double_tmp)
+        {
+            ScaleRatio = qRound(ScaleRatio_double_tmp);
+        }
+        else
+        {
+            CustRes_isEnabled=true;
+            QMap<QString, QString> Res_map = DoubleScaleRatio_Cal_NewScaleRatio_NewHW(SourceFile_fullPath,ScaleRatio_double_tmp);
+            //====
+            if(Res_map.isEmpty())
+            {
+                emit Send_TextBrowser_NewMessage(tr("Error occured when processing [")+SourceFile_fullPath+tr("]. Error: [Unable to read the resolution of the source file.]"));
+                emit Send_Table_image_ChangeStatus_rowNumInt_statusQString(rowNum, "Failed");
+                emit Send_progressbar_Add();
+                mutex_ThreadNumRunning.lock();
+                ThreadNumRunning--;
+                mutex_ThreadNumRunning.unlock();//线程数量统计-1
+                return 0;
+            }
+            //====
+            ScaleRatio = Res_map["ScaleRatio"].toInt();
+            CustRes_height = Res_map["Height_new"].toInt();
+            CustRes_width = Res_map["width_new"].toInt();
+        }
     }
     //===============
     QFileInfo fileinfo(SourceFile_fullPath);
@@ -290,7 +314,7 @@ int MainWindow::Waifu2x_NCNN_Vulkan_Image(int rowNum,bool ReProcess_MissingAlpha
 int MainWindow::Waifu2x_NCNN_Vulkan_GIF(int rowNum)
 {
     //============================= 读取设置 ================================
-    int ScaleRatio = ui->spinBox_ScaleRatio_gif->value();
+    int ScaleRatio = ui->doubleSpinBox_ScaleRatio_gif->value();
     int DenoiseLevel = ui->spinBox_DenoiseLevel_gif->value();
     bool DelOriginal = (ui->checkBox_DelOriginal->isChecked()||ui->checkBox_ReplaceOriginalFile->isChecked());
     bool OptGIF = ui->checkBox_OptGIF->isChecked();
@@ -364,7 +388,7 @@ int MainWindow::Waifu2x_NCNN_Vulkan_GIF(int rowNum)
     }
     else
     {
-        ScaleRatio_Original = ui->spinBox_ScaleRatio_gif->value();
+        ScaleRatio_Original = ui->doubleSpinBox_ScaleRatio_gif->value();
     }
     int ScaleRatio_Max=Calculate_Temporary_ScaleRatio_W2xNCNNVulkan(ScaleRatio_Original);
     bool isOverScaled = (ScaleRatio_Max!=ScaleRatio_Original);
@@ -550,7 +574,7 @@ int MainWindow::Waifu2x_NCNN_Vulkan_GIF(int rowNum)
 int MainWindow::Waifu2x_NCNN_Vulkan_Video(int rowNum)
 {
     //============================= 读取设置 ================================
-    int ScaleRatio = ui->spinBox_ScaleRatio_video->value();
+    int ScaleRatio = ui->doubleSpinBox_ScaleRatio_video->value();
     int DenoiseLevel = ui->spinBox_DenoiseLevel_video->value();
     bool DelOriginal = (ui->checkBox_DelOriginal->isChecked()||ui->checkBox_ReplaceOriginalFile->isChecked());
     bool isCacheExists = false;
@@ -741,7 +765,7 @@ int MainWindow::Waifu2x_NCNN_Vulkan_Video(int rowNum)
     }
     else
     {
-        ScaleRatio_Original = ui->spinBox_ScaleRatio_video->value();
+        ScaleRatio_Original = ui->doubleSpinBox_ScaleRatio_video->value();
     }
     int ScaleRatio_Max=Calculate_Temporary_ScaleRatio_W2xNCNNVulkan(ScaleRatio_Original);
     bool isOverScaled = (ScaleRatio_Max!=ScaleRatio_Original);
@@ -964,7 +988,7 @@ int MainWindow::Waifu2x_NCNN_Vulkan_Video(int rowNum)
 int MainWindow::Waifu2x_NCNN_Vulkan_Video_BySegment(int rowNum)
 {
     //============================= 读取设置 ================================
-    int ScaleRatio = ui->spinBox_ScaleRatio_video->value();
+    int ScaleRatio = ui->doubleSpinBox_ScaleRatio_video->value();
     int DenoiseLevel = ui->spinBox_DenoiseLevel_video->value();
     bool DelOriginal = (ui->checkBox_DelOriginal->isChecked()||ui->checkBox_ReplaceOriginalFile->isChecked());
     bool isCacheExists = false;
@@ -1283,7 +1307,7 @@ int MainWindow::Waifu2x_NCNN_Vulkan_Video_BySegment(int rowNum)
             }
             else
             {
-                ScaleRatio_Original = ui->spinBox_ScaleRatio_video->value();
+                ScaleRatio_Original = ui->doubleSpinBox_ScaleRatio_video->value();
             }
             int ScaleRatio_Max=Calculate_Temporary_ScaleRatio_W2xNCNNVulkan(ScaleRatio_Original);
             isOverScaled = (ScaleRatio_Max!=ScaleRatio_Original);
